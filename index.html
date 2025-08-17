@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>익명 투표 커뮤니티</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap');
+        
+        body { 
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .vote-button {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .vote-button:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+            border-color: rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(102, 126, 234, 0.3);
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .search-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .search-input {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+        }
+        
+        .floating-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .vote-success {
+            animation: voteSuccess 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes voteSuccess {
+            0% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.05) rotate(1deg); }
+            50% { transform: scale(1.1) rotate(-1deg); }
+            75% { transform: scale(1.05) rotate(0.5deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        
+        .tag-gradient {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+        }
+        
+        .create-button {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
+        }
+        
+        .create-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.5);
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            animation: particle 8s linear infinite;
+        }
+        
+        @keyframes particle {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+        
+        .premium-shadow {
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="relative overflow-x-hidden">
+    <!-- 배경 파티클 효과 -->
+    <div class="fixed inset-0 pointer-events-none">
+        <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
+        <div class="particle" style="left: 20%; animation-delay: 1s;"></div>
+        <div class="particle" style="left: 30%; animation-delay: 2s;"></div>
+        <div class="particle" style="left: 40%; animation-delay: 3s;"></div>
+        <div class="particle" style="left: 50%; animation-delay: 4s;"></div>
+        <div class="particle" style="left: 60%; animation-delay: 5s;"></div>
+        <div class="particle" style="left: 70%; animation-delay: 6s;"></div>
+        <div class="particle" style="left: 80%; animation-delay: 7s;"></div>
+        <div class="particle" style="left: 90%; animation-delay: 8s;"></div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12 max-w-5xl relative z-10">
+        <!-- 헤더 -->
+        <div class="text-center mb-12 floating-animation">
+            <div class="glass-effect rounded-3xl p-8 mb-8 premium-shadow">
+                <h1 class="text-5xl font-bold gradient-text mb-4">🗳️ VoteSpace</h1>
+                <p class="text-white/80 text-lg font-medium">실시간 익명 투표 커뮤니티</p>
+                <p class="text-white/60 text-sm mt-2">당신의 선택이 세상을 바꿉니다</p>
+            </div>
+        </div>
+
+        <!-- 검색창 -->
+        <div class="mb-12">
+            <div class="search-container rounded-2xl p-2 max-w-3xl mx-auto premium-shadow">
+                <div class="flex items-center">
+                    <input 
+                        type="text" 
+                        id="searchInput"
+                        placeholder="무엇에 대해 투표하고 싶으신가요? (예: 짜장면, 치킨, 영화...)"
+                        class="search-input flex-1 px-6 py-4 text-lg rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300"
+                    >
+                    <button 
+                        onclick="searchPolls()"
+                        class="ml-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
+                    >
+                        🔍 검색
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 투표 생성 버튼 -->
+        <div class="text-center mb-12">
+            <button 
+                onclick="toggleCreateForm()"
+                class="create-button text-white px-10 py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105"
+            >
+                ✨ 새로운 투표 만들기
+            </button>
+        </div>
+
+        <!-- 투표 생성 폼 -->
+        <div id="createForm" class="hidden mb-12">
+            <div class="glass-card rounded-3xl p-8 premium-shadow">
+                <h3 class="text-2xl font-bold gradient-text mb-6 text-center">새로운 투표 생성</h3>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">투표 제목</label>
+                        <input 
+                            type="text" 
+                            id="pollTitle"
+                            placeholder="어떤 것에 대해 투표할까요?"
+                            class="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-500 transition-all duration-300 text-lg"
+                        >
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">선택지 1</label>
+                            <input 
+                                type="text" 
+                                id="option1"
+                                placeholder="첫 번째 선택지"
+                                class="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-500 transition-all duration-300"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">선택지 2</label>
+                            <input 
+                                type="text" 
+                                id="option2"
+                                placeholder="두 번째 선택지"
+                                class="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-500 transition-all duration-300"
+                            >
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">태그</label>
+                        <input 
+                            type="text" 
+                            id="pollTags"
+                            placeholder="태그를 쉼표로 구분해주세요 (예: 음식,중식,면요리)"
+                            class="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-500 transition-all duration-300"
+                        >
+                    </div>
+                    <div class="flex gap-4 justify-center">
+                        <button 
+                            onclick="createPoll()"
+                            class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
+                        >
+                            🚀 투표 생성
+                        </button>
+                        <button 
+                            onclick="toggleCreateForm()"
+                            class="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
+                        >
+                            취소
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 검색 결과 표시 -->
+        <div id="searchResults" class="mb-8 text-center">
+            <div class="glass-effect rounded-2xl p-4 text-white font-medium inline-block"></div>
+        </div>
+
+        <!-- 탭 메뉴 -->
+        <div class="mb-8">
+            <div class="glass-effect rounded-2xl p-2 max-w-md mx-auto">
+                <div class="flex">
+                    <button 
+                        onclick="switchTab('polls')"
+                        id="pollsTab"
+                        class="flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 text-white bg-gradient-to-r from-blue-500 to-purple-600"
+                    >
+                        🗳️ 투표
+                    </button>
+                    <button 
+                        onclick="switchTab('ranking')"
+                        id="rankingTab"
+                        class="flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 text-white/70 hover:text-white"
+                    >
+                        🏆 TOP 20
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 투표 목록 -->
+        <div id="pollsContent" class="space-y-8">
+            <div id="pollsList" class="space-y-8">
+                <!-- 투표 항목들이 여기에 동적으로 추가됩니다 -->
+            </div>
+        </div>
+
+        <!-- 랭킹 목록 -->
+        <div id="rankingContent" class="hidden">
+            <div class="glass-card rounded-3xl p-8 premium-shadow">
+                <h2 class="text-3xl font-bold gradient-text text-center mb-8">🏆 실시간 인기 투표 TOP 20</h2>
+                <div id="rankingList" class="space-y-4">
+                    <!-- 랭킹이 여기에 표시됩니다 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 투표 데이터 저장소
+        let polls = [
+            {
+                id: 1,
+                title: "짜장면 vs 짬뽕",
+                options: ["짜장면", "짬뽕"],
+                votes: [45, 38],
+                tags: ["음식", "중식", "면요리", "짜장면", "짬뽕"],
+                timestamp: Date.now() - 3600000,
+                comments: [
+                    { id: 1, text: "짜장면이 진리지! 달콤한 맛이 최고야", likes: 12, dislikes: 2, timestamp: Date.now() - 1800000, nickname: "익명의 미식가" },
+                    { id: 2, text: "짬뽕 매운맛에 중독됐어요 ㅠㅠ", likes: 8, dislikes: 1, timestamp: Date.now() - 900000, nickname: "매운맛러버" },
+                    { id: 3, text: "둘 다 맛있는데 굳이 고르라면... 짜장면!", likes: 5, dislikes: 0, timestamp: Date.now() - 300000, nickname: "중식마니아" }
+                ]
+            },
+            {
+                id: 2,
+                title: "치킨 vs 피자",
+                options: ["치킨", "피자"],
+                votes: [62, 41],
+                tags: ["음식", "배달", "치킨", "피자", "야식"],
+                timestamp: Date.now() - 7200000,
+                comments: [
+                    { id: 4, text: "치킨은 언제 먹어도 질리지 않아!", likes: 15, dislikes: 3, timestamp: Date.now() - 3600000, nickname: "치킨중독자" },
+                    { id: 5, text: "피자 치즈의 그 쫄깃함... 🍕", likes: 9, dislikes: 2, timestamp: Date.now() - 1200000, nickname: "치즈러버" }
+                ]
+            },
+            {
+                id: 3,
+                title: "아이폰 vs 갤럭시",
+                options: ["아이폰", "갤럭시"],
+                votes: [28, 35],
+                tags: ["스마트폰", "애플", "삼성", "아이폰", "갤럭시"],
+                timestamp: Date.now() - 1800000,
+                comments: [
+                    { id: 6, text: "아이폰 생태계가 너무 편해요", likes: 7, dislikes: 4, timestamp: Date.now() - 600000, nickname: "애플신도" },
+                    { id: 7, text: "갤럭시 카메라 성능이 진짜 좋더라", likes: 11, dislikes: 1, timestamp: Date.now() - 180000, nickname: "사진작가" }
+                ]
+            },
+            {
+                id: 4,
+                title: "넷플릭스 vs 유튜브",
+                options: ["넷플릭스", "유튜브"],
+                votes: [33, 47],
+                tags: ["영상", "스트리밍", "넷플릭스", "유튜브", "엔터테인먼트"],
+                timestamp: Date.now() - 5400000,
+                comments: [
+                    { id: 8, text: "넷플릭스 오리지널 시리즈 퀄리티 미쳤다", likes: 13, dislikes: 2, timestamp: Date.now() - 2700000, nickname: "드라마덕후" },
+                    { id: 9, text: "유튜브는 무료라는 게 최고 장점", likes: 18, dislikes: 0, timestamp: Date.now() - 450000, nickname: "절약왕" }
+                ]
+            }
+        ];
+
+        let currentSearch = '';
+        let votedPolls = new Set();
+        let likedComments = new Set();
+        let dislikedComments = new Set();
+        let currentTab = 'polls';
+        let commentIdCounter = 10;
+
+        // 페이지 로드 시 모든 투표 표시
+        window.onload = function() {
+            displayPolls(polls);
+        };
+
+        // 검색 기능
+        function searchPolls() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            currentSearch = searchTerm;
+            
+            if (searchTerm === '') {
+                displayPolls(polls);
+                document.getElementById('searchResults').innerHTML = '';
+                return;
+            }
+
+            const filteredPolls = polls.filter(poll => 
+                poll.title.toLowerCase().includes(searchTerm) ||
+                poll.tags.some(tag => tag.toLowerCase().includes(searchTerm)) ||
+                poll.options.some(option => option.toLowerCase().includes(searchTerm))
+            );
+
+            displayPolls(filteredPolls);
+            
+            const resultsText = filteredPolls.length > 0 
+                ? `✨ "${searchTerm}"에 대한 ${filteredPolls.length}개의 투표를 발견했습니다`
+                : `🔍 "${searchTerm}"에 대한 투표를 찾을 수 없습니다`;
+            
+            document.getElementById('searchResults').innerHTML = `<div class="glass-effect rounded-2xl p-4 text-white font-medium inline-block">${resultsText}</div>`;
+        }
+
+        // 엔터키로 검색
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchPolls();
+            }
+        });
+
+        // 투표 목록 표시
+        function displayPolls(pollsToShow) {
+            const pollsList = document.getElementById('pollsList');
+            
+            if (pollsToShow.length === 0) {
+                pollsList.innerHTML = `
+                    <div class="glass-card rounded-3xl p-12 text-center premium-shadow">
+                        <div class="text-8xl mb-6">🤔</div>
+                        <h3 class="text-2xl font-bold gradient-text mb-4">검색 결과가 없습니다</h3>
+                        <p class="text-gray-600 text-lg">다른 키워드로 검색해보시거나 새로운 투표를 만들어보세요!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            pollsList.innerHTML = pollsToShow.map(poll => {
+                const totalVotes = poll.votes.reduce((a, b) => a + b, 0);
+                const hasVoted = votedPolls.has(poll.id);
+                
+                return `
+                    <div class="glass-card rounded-3xl p-8 premium-shadow hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
+                        <div class="flex justify-between items-start mb-6">
+                            <h3 class="text-2xl font-bold gradient-text flex-1 pr-4">${poll.title}</h3>
+                            <div class="text-right">
+                                <div class="text-sm text-gray-500 mb-1">${getTimeAgo(poll.timestamp)}</div>
+                                <div class="text-xs text-gray-400">총 ${totalVotes}표</div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4 mb-6">
+                            ${poll.options.map((option, index) => {
+                                const percentage = totalVotes > 0 ? Math.round((poll.votes[index] / totalVotes) * 100) : 0;
+                                return `
+                                    <div class="relative">
+                                        <button 
+                                            onclick="vote(${poll.id}, ${index})"
+                                            class="vote-button w-full text-left p-6 rounded-2xl transition-all duration-300 ${hasVoted ? 'cursor-not-allowed opacity-75' : ''}"
+                                            ${hasVoted ? 'disabled' : ''}
+                                        >
+                                            <div class="flex justify-between items-center mb-3">
+                                                <span class="font-bold text-gray-800 text-lg">${option}</span>
+                                                <div class="text-right">
+                                                    <div class="font-bold text-purple-600 text-lg">${percentage}%</div>
+                                                    <div class="text-sm text-gray-500">${poll.votes[index]}표</div>
+                                                </div>
+                                            </div>
+                                            <div class="bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                <div class="progress-bar h-3 rounded-full transition-all duration-1000 ease-out" style="width: ${percentage}%"></div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-6">
+                            <div class="flex flex-wrap gap-2">
+                                ${poll.tags.slice(0, 4).map(tag => `
+                                    <span class="tag-gradient text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg">#${tag}</span>
+                                `).join('')}
+                            </div>
+                            ${hasVoted ? '<div class="flex items-center text-green-600 font-bold"><span class="mr-2">✅</span>투표 완료</div>' : ''}
+                        </div>
+
+                        <!-- 댓글 섹션 -->
+                        <div class="border-t border-gray-200 pt-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-lg font-semibold text-gray-800">💬 실시간 토론 (${poll.comments.length})</h4>
+                                <button 
+                                    onclick="toggleComments(${poll.id})"
+                                    class="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"
+                                >
+                                    <span id="toggle-${poll.id}">댓글 보기</span>
+                                </button>
+                            </div>
+                            
+                            <!-- 댓글 입력 -->
+                            <div class="mb-4">
+                                <div class="flex gap-3">
+                                    <input 
+                                        type="text" 
+                                        id="comment-${poll.id}"
+                                        placeholder="익명으로 의견을 남겨보세요..."
+                                        class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-purple-500 transition-all duration-300"
+                                        onkeypress="if(event.key==='Enter') addComment(${poll.id})"
+                                    >
+                                    <button 
+                                        onclick="addComment(${poll.id})"
+                                        class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
+                                    >
+                                        💬
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- 댓글 목록 -->
+                            <div id="comments-${poll.id}" class="hidden space-y-3 max-h-96 overflow-y-auto">
+                                ${poll.comments.map(comment => `
+                                    <div class="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors duration-200">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <span class="font-semibold text-purple-600">${comment.nickname}</span>
+                                            <span class="text-xs text-gray-500">${getTimeAgo(comment.timestamp)}</span>
+                                        </div>
+                                        <p class="text-gray-800 mb-3">${comment.text}</p>
+                                        <div class="flex items-center gap-4">
+                                            <button 
+                                                onclick="likeComment(${comment.id})"
+                                                class="flex items-center gap-1 text-sm ${likedComments.has(comment.id) ? 'text-blue-600' : 'text-gray-500'} hover:text-blue-600 transition-colors duration-200"
+                                            >
+                                                👍 <span>${comment.likes}</span>
+                                            </button>
+                                            <button 
+                                                onclick="dislikeComment(${comment.id})"
+                                                class="flex items-center gap-1 text-sm ${dislikedComments.has(comment.id) ? 'text-red-600' : 'text-gray-500'} hover:text-red-600 transition-colors duration-200"
+                                            >
+                                                👎 <span>${comment.dislikes}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 투표하기
+        function vote(pollId, optionIndex) {
+            if (votedPolls.has(pollId)) {
+                alert('이미 이 투표에 참여하셨습니다! 🗳️');
+                return;
+            }
+
+            const poll = polls.find(p => p.id === pollId);
+            if (poll) {
+                poll.votes[optionIndex]++;
+                votedPolls.add(pollId);
+                
+                // 애니메이션 효과
+                const pollElement = event.target.closest('.glass-card');
+                pollElement.classList.add('vote-success');
+                setTimeout(() => pollElement.classList.remove('vote-success'), 600);
+                
+                // 현재 검색 결과에 따라 다시 표시
+                if (currentSearch) {
+                    searchPolls();
+                } else {
+                    displayPolls(polls);
+                }
+            }
+        }
+
+        // 투표 생성 폼 토글
+        function toggleCreateForm() {
+            const form = document.getElementById('createForm');
+            form.classList.toggle('hidden');
+            
+            if (!form.classList.contains('hidden')) {
+                document.getElementById('pollTitle').focus();
+            }
+        }
+
+        // 새 투표 생성
+        function createPoll() {
+            const title = document.getElementById('pollTitle').value.trim();
+            const option1 = document.getElementById('option1').value.trim();
+            const option2 = document.getElementById('option2').value.trim();
+            const tagsInput = document.getElementById('pollTags').value.trim();
+
+            if (!title || !option1 || !option2) {
+                alert('제목과 두 개의 선택지를 모두 입력해주세요! 📝');
+                return;
+            }
+
+            const tags = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+            
+            const newPoll = {
+                id: polls.length + 1,
+                title: title,
+                options: [option1, option2],
+                votes: [0, 0],
+                tags: tags,
+                timestamp: Date.now(),
+                comments: []
+            };
+
+            polls.unshift(newPoll);
+            
+            // 폼 초기화
+            document.getElementById('pollTitle').value = '';
+            document.getElementById('option1').value = '';
+            document.getElementById('option2').value = '';
+            document.getElementById('pollTags').value = '';
+            
+            toggleCreateForm();
+            
+            // 현재 검색 상태에 따라 표시
+            if (currentSearch) {
+                searchPolls();
+            } else {
+                displayPolls(polls);
+            }
+
+            alert('새로운 투표가 성공적으로 생성되었습니다! 🎉✨');
+        }
+
+        // 탭 전환
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // 탭 버튼 스타일 업데이트
+            document.getElementById('pollsTab').className = tab === 'polls' 
+                ? 'flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 text-white bg-gradient-to-r from-blue-500 to-purple-600'
+                : 'flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 text-white/70 hover:text-white';
+            
+            document.getElementById('rankingTab').className = tab === 'ranking' 
+                ? 'flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 text-white bg-gradient-to-r from-blue-500 to-purple-600'
+                : 'flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 text-white/70 hover:text-white';
+            
+            // 컨텐츠 표시/숨김
+            if (tab === 'polls') {
+                document.getElementById('pollsContent').classList.remove('hidden');
+                document.getElementById('rankingContent').classList.add('hidden');
+            } else {
+                document.getElementById('pollsContent').classList.add('hidden');
+                document.getElementById('rankingContent').classList.remove('hidden');
+                displayRanking();
+            }
+        }
+
+        // 랭킹 표시
+        function displayRanking() {
+            const sortedPolls = [...polls].sort((a, b) => {
+                const totalA = a.votes.reduce((sum, vote) => sum + vote, 0);
+                const totalB = b.votes.reduce((sum, vote) => sum + vote, 0);
+                return totalB - totalA;
+            }).slice(0, 20);
+
+            const rankingList = document.getElementById('rankingList');
+            
+            rankingList.innerHTML = sortedPolls.map((poll, index) => {
+                const totalVotes = poll.votes.reduce((a, b) => a + b, 0);
+                const winningOption = poll.votes[0] > poll.votes[1] ? 0 : 1;
+                const winningPercentage = totalVotes > 0 ? Math.round((poll.votes[winningOption] / totalVotes) * 100) : 0;
+                
+                return `
+                    <div class="flex items-center gap-4 p-4 bg-gradient-to-r from-white/80 to-white/60 rounded-xl hover:from-white/90 hover:to-white/70 transition-all duration-300">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold text-lg">
+                            ${index + 1}
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800 mb-1">${poll.title}</h4>
+                            <div class="flex items-center gap-4 text-sm text-gray-600">
+                                <span class="font-semibold text-purple-600">${poll.options[winningOption]} 승리</span>
+                                <span>${winningPercentage}% (${totalVotes}표)</span>
+                                <span>${poll.comments.length}개 댓글</span>
+                            </div>
+                        </div>
+                        <div class="text-right text-sm text-gray-500">
+                            ${getTimeAgo(poll.timestamp)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 댓글 토글
+        function toggleComments(pollId) {
+            const commentsDiv = document.getElementById(`comments-${pollId}`);
+            const toggleButton = document.getElementById(`toggle-${pollId}`);
+            
+            if (commentsDiv.classList.contains('hidden')) {
+                commentsDiv.classList.remove('hidden');
+                toggleButton.textContent = '댓글 숨기기';
+            } else {
+                commentsDiv.classList.add('hidden');
+                toggleButton.textContent = '댓글 보기';
+            }
+        }
+
+        // 댓글 추가
+        function addComment(pollId) {
+            const commentInput = document.getElementById(`comment-${pollId}`);
+            const commentText = commentInput.value.trim();
+            
+            if (!commentText) {
+                alert('댓글을 입력해주세요!');
+                return;
+            }
+
+            const poll = polls.find(p => p.id === pollId);
+            if (poll) {
+                const nicknames = [
+                    '익명의 토론자', '신비한 투표자', '열정적인 참여자', '냉철한 분석가', 
+                    '따뜻한 마음', '날카로운 시선', '균형잡힌 시각', '창의적 사고자',
+                    '진실 추구자', '공정한 판단자', '열린 마음', '깊은 통찰자'
+                ];
+                
+                const newComment = {
+                    id: commentIdCounter++,
+                    text: commentText,
+                    likes: 0,
+                    dislikes: 0,
+                    timestamp: Date.now(),
+                    nickname: nicknames[Math.floor(Math.random() * nicknames.length)]
+                };
+                
+                poll.comments.unshift(newComment);
+                commentInput.value = '';
+                
+                // 현재 탭에 따라 다시 표시
+                if (currentTab === 'polls') {
+                    if (currentSearch) {
+                        searchPolls();
+                    } else {
+                        displayPolls(polls);
+                    }
+                }
+                
+                // 댓글이 추가되면 자동으로 댓글 섹션 열기
+                setTimeout(() => {
+                    const commentsDiv = document.getElementById(`comments-${pollId}`);
+                    const toggleButton = document.getElementById(`toggle-${pollId}`);
+                    if (commentsDiv && commentsDiv.classList.contains('hidden')) {
+                        commentsDiv.classList.remove('hidden');
+                        toggleButton.textContent = '댓글 숨기기';
+                    }
+                }, 100);
+            }
+        }
+
+        // 댓글 좋아요
+        function likeComment(commentId) {
+            if (likedComments.has(commentId)) {
+                alert('이미 좋아요를 누르셨습니다!');
+                return;
+            }
+            
+            if (dislikedComments.has(commentId)) {
+                dislikedComments.delete(commentId);
+                // 싫어요에서 좋아요로 변경
+                polls.forEach(poll => {
+                    const comment = poll.comments.find(c => c.id === commentId);
+                    if (comment) {
+                        comment.dislikes = Math.max(0, comment.dislikes - 1);
+                    }
+                });
+            }
+            
+            likedComments.add(commentId);
+            
+            polls.forEach(poll => {
+                const comment = poll.comments.find(c => c.id === commentId);
+                if (comment) {
+                    comment.likes++;
+                }
+            });
+            
+            // 현재 탭에 따라 다시 표시
+            if (currentTab === 'polls') {
+                if (currentSearch) {
+                    searchPolls();
+                } else {
+                    displayPolls(polls);
+                }
+            }
+        }
+
+        // 댓글 싫어요
+        function dislikeComment(commentId) {
+            if (dislikedComments.has(commentId)) {
+                alert('이미 싫어요를 누르셨습니다!');
+                return;
+            }
+            
+            if (likedComments.has(commentId)) {
+                likedComments.delete(commentId);
+                // 좋아요에서 싫어요로 변경
+                polls.forEach(poll => {
+                    const comment = poll.comments.find(c => c.id === commentId);
+                    if (comment) {
+                        comment.likes = Math.max(0, comment.likes - 1);
+                    }
+                });
+            }
+            
+            dislikedComments.add(commentId);
+            
+            polls.forEach(poll => {
+                const comment = poll.comments.find(c => c.id === commentId);
+                if (comment) {
+                    comment.dislikes++;
+                }
+            });
+            
+            // 현재 탭에 따라 다시 표시
+            if (currentTab === 'polls') {
+                if (currentSearch) {
+                    searchPolls();
+                } else {
+                    displayPolls(polls);
+                }
+            }
+        }
+
+        // 시간 표시 함수
+        function getTimeAgo(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (days > 0) return `${days}일 전`;
+            if (hours > 0) return `${hours}시간 전`;
+            if (minutes > 0) return `${minutes}분 전`;
+            return '방금 전';
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97096bba774e0d05',t:'MTc1NTQzNjMyMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
