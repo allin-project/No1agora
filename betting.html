@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VirtSports - 가상 스포츠 베팅 플랫폼</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: #0f0f0f;
+            color: #e5e5e5;
+            line-height: 1.6;
+        }
+        
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .btn {
+            background: #007bff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-weight: 500;
+            font-size: 14px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .odds-btn {
+            background: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 6px;
+            padding: 12px;
+            font-weight: 600;
+            color: #e5e5e5;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .odds-btn:hover {
+            background: #333;
+            border-color: #007bff;
+            color: #007bff;
+        }
+        
+        .odds-btn.selected {
+            background: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+        
+        .live-indicator {
+            color: #dc3545;
+        }
+        
+        .nav-btn {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-weight: 500;
+            color: #e5e5e5;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-btn:hover {
+            background: #333;
+            color: #007bff;
+        }
+        
+        .nav-btn.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .rank-gold { color: #ffd700; }
+        .rank-silver { color: #c0c0c0; }
+        .rank-bronze { color: #cd7f32; }
+        
+        .progress-bar {
+            background: #007bff;
+            height: 4px;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        .stats-card {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 16px;
+            text-align: center;
+        }
+        
+        .form-input {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: #e5e5e5;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        
+        .modal-backdrop {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .sport-icon {
+            font-size: 1.5rem;
+        }
+        
+        .table-row {
+            border-bottom: 1px solid #444;
+            transition: background-color 0.2s ease;
+        }
+        
+        .table-row:hover {
+            background: #2a2a2a;
+        }
+        
+        .match-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .match-card:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="bg-gray-900 border-b border-gray-700 shadow-sm">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="sport-icon">⚽</div>
+                        <div>
+                            <h1 class="text-2xl font-bold text-white">VirtSports</h1>
+                            <p class="text-gray-300 text-sm">가상 스포츠 베팅</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <div class="stats-card">
+                        <div class="text-blue-600 font-bold text-lg" id="userPoints">10,000</div>
+                        <div class="text-gray-300 text-sm">포인트</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="text-green-400 font-bold text-lg" id="userRank">#1</div>
+                        <div class="text-gray-300 text-sm">순위</div>
+                    </div>
+                    <button onclick="showRankings()" class="btn">
+                        전체 랭킹
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- 네비게이션 -->
+        <nav class="mb-6">
+            <div class="card p-3">
+                <div class="flex gap-2">
+                    <button onclick="showSection('live')" id="liveBtn" class="nav-btn active">
+                        <span class="live-indicator">●</span> 라이브 경기
+                    </button>
+                    <button onclick="showSection('upcoming')" id="upcomingBtn" class="nav-btn">
+                        예정 경기
+                    </button>
+                    <button onclick="showSection('history')" id="historyBtn" class="nav-btn">
+                        베팅 내역
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 라이브 경기 섹션 -->
+        <div id="liveSection" class="section">
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- 경기 목록 -->
+                <div class="lg:col-span-2">
+                    <div class="card p-6 mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                                <span class="live-indicator">●</span> 
+                                라이브 경기
+                            </h2>
+                            <div class="text-sm text-gray-400">
+                                실시간 업데이트
+                            </div>
+                        </div>
+                        
+                        <div id="liveMatches" class="space-y-6">
+                            <!-- 동적으로 로드됨 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 베팅 슬립 & 순위 -->
+                <div class="space-y-8">
+                    <!-- 베팅 슬립 -->
+                    <div class="card p-4">
+                        <h3 class="text-lg font-bold text-white mb-4">베팅 슬립</h3>
+                        <div id="bettingSlip">
+                            <div class="text-center text-gray-400 py-8">
+                                <div class="text-4xl mb-3">🎲</div>
+                                <p>경기를 선택하여<br>베팅을 시작하세요!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 실시간 순위 -->
+                    <div class="card p-4">
+                        <h3 class="text-lg font-bold text-white mb-4">TOP 5 랭킹</h3>
+                        <div id="topRankings" class="space-y-3">
+                            <!-- 동적으로 로드됨 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 예정 경기 섹션 -->
+        <div id="upcomingSection" class="section hidden">
+            <div class="card p-6">
+                <h2 class="text-xl font-bold text-white mb-6">예정된 경기</h2>
+                <div id="upcomingMatches" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- 동적으로 로드됨 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 베팅 내역 섹션 -->
+        <div id="historySection" class="section hidden">
+            <div class="card p-6">
+                <h2 class="text-xl font-bold text-white mb-6">나의 베팅 내역</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-4 py-3 text-left text-gray-700 font-semibold">경기</th>
+                                <th class="px-4 py-3 text-left text-gray-700 font-semibold">베팅</th>
+                                <th class="px-4 py-3 text-left text-gray-700 font-semibold">배당</th>
+                                <th class="px-4 py-3 text-left text-gray-700 font-semibold">포인트</th>
+                                <th class="px-4 py-3 text-left text-gray-700 font-semibold">결과</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bettingHistory">
+                            <!-- 동적으로 로드됨 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 랭킹 모달 -->
+    <div id="rankingModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50">
+        <div class="card p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-900">전체 랭킹</h2>
+                <button onclick="hideRankings()" class="btn">×</button>
+            </div>
+            <div id="fullRankings" class="space-y-3">
+                <!-- 동적으로 로드됨 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 관리자 패널 모달 -->
+    <div id="adminModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="card rounded-xl p-8 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-white">⚙️ 관리자 패널</h2>
+                <button onclick="hideAdminPanel()" class="text-slate-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- 포인트 관리 -->
+                <div class="bg-slate-700 rounded-lg p-6">
+                    <h3 class="text-lg font-bold text-white mb-4">💰 포인트 관리</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-slate-300 mb-2">포인트 추가/차감</label>
+                            <input type="number" id="pointsToAdd" placeholder="포인트 입력" class="w-full bg-slate-600 border border-slate-500 rounded-lg px-4 py-2 text-white">
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="addPoints()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium">
+                                ➕ 추가
+                            </button>
+                            <button onclick="removePoints()" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-medium">
+                                ➖ 차감
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex gap-2">
+                        <button onclick="setPoints(50000)" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
+                            50,000P 설정
+                        </button>
+                        <button onclick="setPoints(100000)" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
+                            100,000P 설정
+                        </button>
+                        <button onclick="resetPoints()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm">
+                            초기화 (10,000P)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 경기 관리 -->
+                <div class="bg-slate-700 rounded-lg p-6">
+                    <h3 class="text-lg font-bold text-white mb-4">⚽ 경기 관리</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <button onclick="forceCreateMatch()" class="bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium">
+                            🆕 새 경기 생성
+                        </button>
+                        <button onclick="endAllMatches()" class="bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium">
+                            🛑 모든 경기 종료
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="createSpecialEvent()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-medium">
+                            ✨ 특별 이벤트 경기 생성
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 시스템 관리 -->
+                <div class="bg-slate-700 rounded-lg p-6">
+                    <h3 class="text-lg font-bold text-white mb-4">🔧 시스템 관리</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <button onclick="resetAllData()" class="bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium">
+                            🗑️ 모든 데이터 초기화
+                        </button>
+                        <button onclick="exportData()" class="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium">
+                            📤 데이터 내보내기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 현재 상태 -->
+                <div class="bg-slate-700 rounded-lg p-6">
+                    <h3 class="text-lg font-bold text-white mb-4">📊 현재 상태</h3>
+                    <div class="grid md:grid-cols-3 gap-4 text-center">
+                        <div>
+                            <div class="text-2xl font-bold text-green-400" id="adminLiveCount">0</div>
+                            <div class="text-slate-300 text-sm">진행 중 경기</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-blue-400" id="adminUpcomingCount">0</div>
+                            <div class="text-slate-300 text-sm">예정 경기</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-yellow-400" id="adminBetCount">0</div>
+                            <div class="text-slate-300 text-sm">활성 베팅</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 베팅 확인 모달 -->
+    <div id="betModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50">
+        <div class="card p-6 max-w-md w-full mx-4">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">베팅 확인</h3>
+            <div id="betDetails" class="space-y-3 mb-6">
+                <!-- 동적으로 로드됨 -->
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-700 font-medium mb-2">베팅 포인트</label>
+                <input type="number" id="betAmount" min="100" max="5000" value="1000" class="w-full form-input">
+                <div class="text-sm text-gray-500 mt-1">최소 100P ~ 최대 5,000P</div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="confirmBet()" class="flex-1 btn btn-success">
+                    베팅 확정
+                </button>
+                <button onclick="cancelBet()" class="flex-1 btn" style="background: #6c757d;">
+                    취소
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 게임 상태
+        let userPoints = 10000;
+        let currentBets = [];
+        let bettingHistory = [];
+        let liveMatches = [];
+        let upcomingMatches = [];
+        let rankings = [];
+        let selectedBet = null;
+
+        // 스포츠 종목과 팀 데이터
+        const sports = ['축구', '농구', '야구', '테니스', '배구', '말경기', '개경기'];
+        const teams = {
+            '축구': ['레알 마드리드', '바르셀로나', '맨체스터 유나이티드', '리버풀', '바이에른 뮌헨', '파리 생제르맹', '유벤투스', '첼시'],
+            '농구': ['레이커스', '워리어스', '셀틱스', '네츠', '히트', '벅스', '선즈', '너겟츠'],
+            '야구': ['양키스', '다저스', '레드삭스', '자이언츠', '애스트로스', '브레이브스', '패드리스', '메츠'],
+            '테니스': ['노바크 조코비치', '라파엘 나달', '로저 페더러', '다닐 메드베데프', '알렉산더 즈베레프', '스테파노스 치치파스'],
+            '배구': ['한국전력', 'KB손해보험', '현대캐피탈', '우리카드', '삼성화재', 'OK금융그룹'],
+            '말경기': ['썬더볼트', '골든스피드', '로열프린스', '파이어스톰', '윈드러너', '블랙다이아몬드', '실버불릿', '레드플래시', '스타라이트', '드림체이서'],
+            '개경기': ['스피드킹', '럭키독', '플래시', '터보', '로켓', '불릿', '라이트닝', '스톰', '블레이즈', '체이서']
+        };
+
+        // 초기화
+        function init() {
+            console.log('init 함수 시작');
+            loadUserData();
+            
+            // 경기 강제 생성
+            liveMatches = [];
+            for (let i = 0; i < 3; i++) {
+                const match = createRandomMatch(true);
+                liveMatches.push(match);
+                console.log('생성된 경기 ' + (i+1) + ':', match);
+            }
+            
+            generateUpcomingMatches();
+            generateRankings();
+            
+            console.log('총 라이브 경기 수:', liveMatches.length);
+            
+            // 즉시 UI 업데이트
+            updateLiveMatches();
+            updateUpcomingMatches();
+            updateUI();
+        }
+
+        // 사용자 데이터 로드
+        function loadUserData() {
+            const saved = localStorage.getItem('virtSportsData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                userPoints = data.userPoints || 10000;
+                bettingHistory = data.bettingHistory || [];
+                rankings = data.rankings || [];
+            }
+            
+            // 초기 랭킹 생성
+            if (rankings.length === 0) {
+                generateInitialRankings();
+            }
+        }
+
+        // 데이터 저장
+        function saveUserData() {
+            const data = {
+                userPoints: userPoints,
+                bettingHistory: bettingHistory,
+                rankings: rankings
+            };
+            localStorage.setItem('virtSportsData', JSON.stringify(data));
+        }
+
+        // 라이브 경기 생성
+        function generateLiveMatches() {
+            console.log('라이브 경기 생성 시작');
+            liveMatches = [];
+            for (let i = 0; i < 3; i++) {
+                const match = createRandomMatch(true);
+                console.log('생성된 경기:', match);
+                liveMatches.push(match);
+            }
+            console.log('총 생성된 라이브 경기 수:', liveMatches.length);
+        }
+
+        // 예정 경기 생성
+        function generateUpcomingMatches() {
+            upcomingMatches = [];
+            for (let i = 0; i < 6; i++) {
+                const match = createRandomMatch(false);
+                match.startTime = Date.now() + (i + 1) * 300000; // 5분 간격
+                upcomingMatches.push(match);
+            }
+        }
+
+        // 랜덤 경기 생성
+        function createRandomMatch(isLive = false) {
+            const sport = sports[Math.floor(Math.random() * sports.length)];
+            const sportTeams = teams[sport];
+            
+            // 경마/개경기는 다중 참가자 레이스
+            if (sport === '말경기' || sport === '개경기') {
+                const participants = [];
+                const numParticipants = Math.floor(Math.random() * 4) + 6; // 6-9마리
+                
+                for (let i = 0; i < numParticipants; i++) {
+                    let participant = sportTeams[Math.floor(Math.random() * sportTeams.length)];
+                    while (participants.some(p => p.name === participant)) {
+                        participant = sportTeams[Math.floor(Math.random() * sportTeams.length)];
+                    }
+                    
+                    participants.push({
+                        name: participant,
+                        number: i + 1,
+                        odds: (Math.random() * 8 + 1.5).toFixed(2), // 1.5배 ~ 9.5배
+                        position: isLive ? Math.floor(Math.random() * 100) : 0
+                    });
+                }
+                
+                // 배당률 기준으로 정렬 (낮은 배당률이 1등 후보)
+                participants.sort((a, b) => parseFloat(a.odds) - parseFloat(b.odds));
+                
+                const match = {
+                    id: Date.now() + Math.random(),
+                    sport: sport,
+                    isRace: true,
+                    participants: participants,
+                    isLive: isLive,
+                    startTime: isLive ? Date.now() : null,
+                    duration: 180000, // 3분
+                    raceDistance: sport === '말경기' ? '1200m' : '500m'
+                };
+                
+                return match;
+            }
+            
+            // 일반 스포츠 (기존 로직)
+            const team1 = sportTeams[Math.floor(Math.random() * sportTeams.length)];
+            let team2 = sportTeams[Math.floor(Math.random() * sportTeams.length)];
+            while (team2 === team1) {
+                team2 = sportTeams[Math.floor(Math.random() * sportTeams.length)];
+            }
+
+            const match = {
+                id: Date.now() + Math.random(),
+                sport: sport,
+                team1: team1,
+                team2: team2,
+                odds1: (Math.random() * 2 + 1.2).toFixed(2),
+                odds2: (Math.random() * 2 + 1.2).toFixed(2),
+                oddsDraw: sport !== '테니스' ? (Math.random() * 1.5 + 2.5).toFixed(2) : null,
+                isLive: isLive,
+                startTime: isLive ? Date.now() : null,
+                duration: 180000, // 3분
+                score1: isLive ? Math.floor(Math.random() * 3) : 0,
+                score2: isLive ? Math.floor(Math.random() * 3) : 0
+            };
+
+            return match;
+        }
+
+        // 새로운 경기 생성
+        function generateNewMatch() {
+            // 라이브 경기가 3개 미만이면 추가
+            if (liveMatches.length < 3) {
+                liveMatches.push(createRandomMatch(true));
+            }
+            
+            // 예정 경기 추가
+            if (upcomingMatches.length < 6) {
+                const match = createRandomMatch(false);
+                match.startTime = Date.now() + 300000;
+                upcomingMatches.push(match);
+            }
+            
+            updateLiveMatches();
+            updateUpcomingMatches();
+        }
+
+        // 경기 결과 처리
+        function processMatchResults() {
+            liveMatches.forEach(match => {
+                if (Date.now() - match.startTime >= match.duration) {
+                    let winner;
+                    
+                    if (match.isRace) {
+                        // 경마/개경기 결과 처리
+                        // 배당률이 낮을수록 우승 확률 높음
+                        const totalWeight = match.participants.reduce((sum, p) => {
+                            return sum + (10 / parseFloat(p.odds)); // 배당률 역수로 가중치
+                        }, 0);
+                        
+                        let random = Math.random() * totalWeight;
+                        for (let participant of match.participants) {
+                            random -= (10 / parseFloat(participant.odds));
+                            if (random <= 0) {
+                                winner = participant.number;
+                                break;
+                            }
+                        }
+                    } else {
+                        // 일반 스포츠 결과 처리
+                        const result = Math.random();
+                        if (result < 0.4) winner = 'team1';
+                        else if (result < 0.8) winner = 'team2';
+                        else winner = 'draw';
+                    }
+                    
+                    // 베팅 결과 처리
+                    processBettingResults(match.id, winner);
+                }
+            });
+            
+            // 종료된 경기 제거
+            liveMatches = liveMatches.filter(match => 
+                Date.now() - match.startTime < match.duration
+            );
+            
+            updateLiveMatches();
+        }
+
+        // 베팅 결과 처리
+        function processBettingResults(matchId, winner) {
+            currentBets.forEach(bet => {
+                if (bet.matchId === matchId) {
+                    let won = false;
+                    
+                    if (bet.isRace) {
+                        // 경마/개경기 베팅 결과
+                        if (bet.participantNumber === winner) {
+                            won = true;
+                            const winAmount = Math.floor(bet.amount * bet.odds);
+                            userPoints += winAmount;
+                            
+                            // 승리 애니메이션
+                            showWinAnimation(winAmount);
+                        }
+                    } else {
+                        // 일반 스포츠 베팅 결과
+                        if ((bet.type === 'team1' && winner === 'team1') ||
+                            (bet.type === 'team2' && winner === 'team2') ||
+                            (bet.type === 'draw' && winner === 'draw')) {
+                            won = true;
+                            const winAmount = Math.floor(bet.amount * bet.odds);
+                            userPoints += winAmount;
+                            
+                            // 승리 애니메이션
+                            showWinAnimation(winAmount);
+                        }
+                    }
+                    
+                    // 베팅 내역에 추가
+                    bettingHistory.unshift({
+                        ...bet,
+                        result: won ? 'win' : 'lose',
+                        timestamp: Date.now(),
+                        winner: winner
+                    });
+                }
+            });
+            
+            // 처리된 베팅 제거
+            currentBets = currentBets.filter(bet => bet.matchId !== matchId);
+            
+            updateRankings();
+            saveUserData();
+            updateUI();
+        }
+
+        // 승리 애니메이션
+        function showWinAnimation(amount) {
+            const pointsElement = document.getElementById('userPoints');
+            pointsElement.classList.add('celebration');
+            
+            // 플로팅 포인트 표시
+            const floatingPoints = document.createElement('div');
+            floatingPoints.className = 'floating-points fixed text-green-400 font-bold text-2xl z-50';
+            floatingPoints.textContent = `+${amount}P`;
+            floatingPoints.style.left = pointsElement.getBoundingClientRect().left + 'px';
+            floatingPoints.style.top = pointsElement.getBoundingClientRect().top + 'px';
+            document.body.appendChild(floatingPoints);
+            
+            setTimeout(() => {
+                pointsElement.classList.remove('celebration');
+                floatingPoints.remove();
+            }, 2000);
+        }
+
+        // 베팅하기
+        function placeBet(matchId, type, odds, teamName, participantNumber = null) {
+            const match = liveMatches.find(m => m.id === matchId);
+            if (!match) return;
+            
+            selectedBet = {
+                matchId: matchId,
+                type: type,
+                odds: parseFloat(odds),
+                teamName: teamName,
+                match: match,
+                isRace: match.isRace || false,
+                participantNumber: participantNumber
+            };
+            
+            // 베팅 모달 표시
+            showBetModal();
+        }
+
+        // 베팅 모달 표시
+        function showBetModal() {
+            const modal = document.getElementById('betModal');
+            const details = document.getElementById('betDetails');
+            
+            details.innerHTML = `
+                <div class="bg-slate-700 rounded-lg p-4">
+                    <div class="text-white font-medium">${selectedBet.match.team1} vs ${selectedBet.match.team2}</div>
+                    <div class="text-slate-300 text-sm">${selectedBet.match.sport}</div>
+                    <div class="text-blue-400 font-bold mt-2">
+                        ${selectedBet.teamName} (${selectedBet.odds}배)
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // 베팅 확정
+        function confirmBet() {
+            const amount = parseInt(document.getElementById('betAmount').value);
+            
+            if (amount < 100 || amount > 5000) {
+                alert('베팅 포인트는 100P ~ 5,000P 사이여야 합니다.');
+                return;
+            }
+            
+            if (amount > userPoints) {
+                alert('포인트가 부족합니다.');
+                return;
+            }
+            
+            // 포인트 차감
+            userPoints -= amount;
+            
+            // 베팅 추가
+            currentBets.push({
+                ...selectedBet,
+                amount: amount,
+                timestamp: Date.now()
+            });
+            
+            cancelBet();
+            updateUI();
+            updateBettingHistory(); // 베팅 내역 즉시 업데이트
+            saveUserData();
+            
+            alert(`✅ 베팅이 완료되었습니다!\n${amount}P를 베팅했습니다.`);
+        }
+
+        // 베팅 취소
+        function cancelBet() {
+            document.getElementById('betModal').classList.add('hidden');
+            document.getElementById('betModal').classList.remove('flex');
+            selectedBet = null;
+        }
+
+        // 섹션 전환
+        function showSection(section) {
+            // 모든 섹션 숨기기
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            
+            // 네비게이션 버튼 스타일 초기화
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 선택된 섹션 표시
+            document.getElementById(section + 'Section').classList.remove('hidden');
+            document.getElementById(section + 'Btn').classList.add('active');
+            
+            // 섹션별 데이터 업데이트
+            if (section === 'history') {
+                updateBettingHistory();
+            } else if (section === 'live') {
+                updateLiveMatches();
+            } else if (section === 'upcoming') {
+                updateUpcomingMatches();
+            }
+        }
+
+        // 라이브 경기 업데이트
+        function updateLiveMatches() {
+            console.log('라이브 경기 업데이트 시작, 경기 수:', liveMatches.length);
+            const container = document.getElementById('liveMatches');
+            
+            if (!container) {
+                console.error('liveMatches 컨테이너를 찾을 수 없음');
+                return;
+            }
+            
+            if (liveMatches.length === 0) {
+                console.log('경기가 없어서 메시지 표시');
+                container.innerHTML = `
+                    <div class="text-center text-slate-400 py-8">
+                        <div class="text-4xl mb-4">⏰</div>
+                        <p>현재 진행 중인 경기가 없습니다</p>
+                        <button onclick="generateLiveMatches(); updateLiveMatches();" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                            경기 생성하기
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = liveMatches.map(match => {
+                const elapsed = Math.floor((Date.now() - match.startTime) / 1000);
+                const remaining = Math.max(0, 180 - elapsed);
+                const minutes = Math.floor(remaining / 60);
+                const seconds = remaining % 60;
+                
+                if (match.isRace) {
+                    // 경마/개경기 레이아웃
+                    return `
+                        <div class="card p-6 mb-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="sport-icon">${getSportIcon(match.sport)}</span>
+                                    <div>
+                                        <div class="text-gray-900 font-bold">${match.sport} - ${match.raceDistance}</div>
+                                        <div class="text-red-600 text-sm flex items-center gap-1">
+                                            <span class="live-indicator">●</span> LIVE 레이스
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-gray-900 font-bold">${match.participants.length}마리</div>
+                                    <div class="text-blue-600 font-medium">${minutes}:${seconds.toString().padStart(2, '0')}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                                ${match.participants.map(participant => `
+                                    <button onclick="placeBet(${match.id}, 'race', ${participant.odds}, '${participant.number}번 ${participant.name}', ${participant.number})" 
+                                            class="odds-btn text-center">
+                                        <div class="text-xs text-gray-600">${participant.number}번</div>
+                                        <div class="text-sm font-medium truncate">${participant.name}</div>
+                                        <div class="text-lg font-bold text-blue-600">${participant.odds}배</div>
+                                    </button>
+                                `).join('')}
+                            </div>
+                            
+                            <div class="bg-gray-200 rounded-full h-2 overflow-hidden">
+                                <div class="progress-bar h-full" style="width: ${(remaining / 180) * 100}%"></div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // 일반 스포츠 레이아웃
+                    return `
+                        <div class="card p-6 mb-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="sport-icon">${getSportIcon(match.sport)}</span>
+                                    <div>
+                                        <div class="text-gray-900 font-bold">${match.sport}</div>
+                                        <div class="text-red-600 text-sm flex items-center gap-1">
+                                            <span class="live-indicator">●</span> LIVE
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-gray-900 font-bold text-xl">${match.score1} : ${match.score2}</div>
+                                    <div class="text-blue-600 font-medium">${minutes}:${seconds.toString().padStart(2, '0')}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-${match.oddsDraw ? '3' : '2'} gap-3 mb-4">
+                                <button onclick="placeBet(${match.id}, 'team1', ${match.odds1}, '${match.team1}')" 
+                                        class="odds-btn text-center py-4">
+                                    <div class="text-sm font-medium">${match.team1}</div>
+                                    <div class="text-xl font-bold text-blue-600">${match.odds1}</div>
+                                </button>
+                                
+                                ${match.oddsDraw ? `
+                                    <button onclick="placeBet(${match.id}, 'draw', ${match.oddsDraw}, '무승부')" 
+                                            class="odds-btn text-center py-4">
+                                        <div class="text-sm font-medium">무승부</div>
+                                        <div class="text-xl font-bold text-blue-600">${match.oddsDraw}</div>
+                                    </button>
+                                ` : ''}
+                                
+                                <button onclick="placeBet(${match.id}, 'team2', ${match.odds2}, '${match.team2}')" 
+                                        class="odds-btn text-center py-4">
+                                    <div class="text-sm font-medium">${match.team2}</div>
+                                    <div class="text-xl font-bold text-blue-600">${match.odds2}</div>
+                                </button>
+                            </div>
+                            
+                            <div class="bg-gray-200 rounded-full h-2 overflow-hidden">
+                                <div class="progress-bar h-full" style="width: ${(remaining / 180) * 100}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        // 예정 경기 업데이트
+        function updateUpcomingMatches() {
+            const container = document.getElementById('upcomingMatches');
+            
+            container.innerHTML = upcomingMatches.map(match => {
+                const timeUntil = Math.max(0, match.startTime - Date.now());
+                const minutes = Math.floor(timeUntil / 60000);
+                const seconds = Math.floor((timeUntil % 60000) / 1000);
+                
+                if (match.isRace) {
+                    // 경마/개경기 예정 경기
+                    return `
+                        <div class="match-card rounded-lg p-4">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="text-xl">${getSportIcon(match.sport)}</span>
+                                <div>
+                                    <div class="text-white font-medium">${match.sport} - ${match.raceDistance}</div>
+                                    <div class="text-blue-400 text-sm">${minutes}:${seconds.toString().padStart(2, '0')} 후 시작</div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mb-3">
+                                <div class="text-white font-bold">${match.participants.length}마리 출전</div>
+                                <div class="text-slate-400 text-sm">레이스 예정</div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-1 text-center text-xs">
+                                ${match.participants.slice(0, 4).map(participant => `
+                                    <div class="bg-slate-700 py-1 rounded">
+                                        <div class="text-slate-300">${participant.number}번 ${participant.name}</div>
+                                        <div class="text-green-400 font-bold">${participant.odds}배</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            ${match.participants.length > 4 ? `
+                                <div class="text-center text-slate-400 text-xs mt-2">
+                                    외 ${match.participants.length - 4}마리 더...
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                } else {
+                    // 일반 스포츠 예정 경기
+                    return `
+                        <div class="match-card rounded-lg p-4">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="text-xl">${getSportIcon(match.sport)}</span>
+                                <div>
+                                    <div class="text-white font-medium">${match.sport}</div>
+                                    <div class="text-blue-400 text-sm">${minutes}:${seconds.toString().padStart(2, '0')} 후 시작</div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mb-3">
+                                <div class="text-white">${match.team1}</div>
+                                <div class="text-slate-400 text-sm">vs</div>
+                                <div class="text-white">${match.team2}</div>
+                            </div>
+                            
+                            <div class="grid grid-cols-${match.oddsDraw ? '3' : '2'} gap-2 text-center text-sm">
+                                <div class="bg-slate-700 py-2 rounded">
+                                    <div class="text-slate-300">${match.team1}</div>
+                                    <div class="text-green-400 font-bold">${match.odds1}</div>
+                                </div>
+                                ${match.oddsDraw ? `
+                                    <div class="bg-slate-700 py-2 rounded">
+                                        <div class="text-slate-300">무승부</div>
+                                        <div class="text-green-400 font-bold">${match.oddsDraw}</div>
+                                    </div>
+                                ` : ''}
+                                <div class="bg-slate-700 py-2 rounded">
+                                    <div class="text-slate-300">${match.team2}</div>
+                                    <div class="text-green-400 font-bold">${match.odds2}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        // 베팅 내역 업데이트
+        function updateBettingHistory() {
+            const tbody = document.getElementById('bettingHistory');
+            
+            // 현재 베팅과 완료된 베팅을 모두 포함
+            const allBets = [...bettingHistory, ...currentBets.map(bet => ({
+                ...bet,
+                result: 'pending',
+                timestamp: bet.timestamp
+            }))];
+            
+            if (allBets.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-slate-400 py-8">
+                            <div class="text-4xl mb-2">📊</div>
+                            <p>아직 베팅 내역이 없습니다</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // 시간순으로 정렬 (최신순)
+            allBets.sort((a, b) => b.timestamp - a.timestamp);
+            
+            tbody.innerHTML = allBets.slice(0, 20).map(bet => {
+                const date = new Date(bet.timestamp).toLocaleDateString();
+                const time = new Date(bet.timestamp).toLocaleTimeString();
+                
+                let resultClass, resultText, points;
+                
+                if (bet.result === 'pending') {
+                    resultClass = 'text-yellow-400';
+                    resultText = '진행중';
+                    points = `${bet.amount}P 베팅`;
+                } else if (bet.result === 'win') {
+                    resultClass = 'text-green-400';
+                    resultText = '승리';
+                    points = `+${Math.floor(bet.amount * bet.odds)}P`;
+                } else {
+                    resultClass = 'text-red-400';
+                    resultText = '패배';
+                    points = `-${bet.amount}P`;
+                }
+                
+                let matchDisplay;
+                if (bet.isRace) {
+                    matchDisplay = `${bet.match.sport} - ${bet.match.raceDistance || '레이스'}`;
+                } else {
+                    matchDisplay = `${bet.match.team1} vs ${bet.match.team2}`;
+                }
+                
+                return `
+                    <tr class="hover:bg-slate-700">
+                        <td class="px-4 py-3 text-white">
+                            ${matchDisplay}
+                            <div class="text-sm text-slate-400">${date} ${time}</div>
+                        </td>
+                        <td class="px-4 py-3 text-slate-300">${bet.teamName}</td>
+                        <td class="px-4 py-3 text-slate-300">${bet.odds}배</td>
+                        <td class="px-4 py-3 text-slate-300">${bet.amount}P</td>
+                        <td class="px-4 py-3">
+                            <span class="${resultClass} font-medium">${resultText}</span>
+                            <div class="text-sm ${resultClass}">${points}</div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 랭킹 생성
+        function generateInitialRankings() {
+            const names = ['베팅킹', '럭키세븐', '골든터치', '스포츠매니아', '승부사', '포인트헌터', '베팅마스터', '럭키스타'];
+            
+            rankings = names.map((name, index) => ({
+                name: name,
+                points: 15000 - (index * 1000) + Math.floor(Math.random() * 500),
+                wins: Math.floor(Math.random() * 50) + 20,
+                totalBets: Math.floor(Math.random() * 100) + 50
+            }));
+            
+            // 현재 사용자 추가
+            rankings.push({
+                name: '나',
+                points: userPoints,
+                wins: bettingHistory.filter(bet => bet.result === 'win').length,
+                totalBets: bettingHistory.length,
+                isUser: true
+            });
+            
+            updateRankings();
+        }
+
+        // 랭킹 업데이트
+        function updateRankings() {
+            // 사용자 정보 업데이트
+            const userRank = rankings.find(r => r.isUser);
+            if (userRank) {
+                userRank.points = userPoints;
+                userRank.wins = bettingHistory.filter(bet => bet.result === 'win').length;
+                userRank.totalBets = bettingHistory.length;
+            }
+            
+            // 포인트 순으로 정렬
+            rankings.sort((a, b) => b.points - a.points);
+            
+            // 순위 업데이트
+            rankings.forEach((rank, index) => {
+                rank.position = index + 1;
+            });
+            
+            updateTopRankings();
+            
+            // 사용자 순위 표시
+            const userPosition = rankings.find(r => r.isUser)?.position || 1;
+            document.getElementById('userRank').textContent = `#${userPosition}`;
+        }
+
+        // TOP 5 랭킹 업데이트
+        function updateTopRankings() {
+            const container = document.getElementById('topRankings');
+            
+            container.innerHTML = rankings.slice(0, 5).map(rank => {
+                const medalClass = rank.position === 1 ? 'rank-gold' : 
+                                 rank.position === 2 ? 'rank-silver' : 
+                                 rank.position === 3 ? 'rank-bronze' : 'text-slate-300';
+                
+                const medal = rank.position === 1 ? '🥇' : 
+                             rank.position === 2 ? '🥈' : 
+                             rank.position === 3 ? '🥉' : `#${rank.position}`;
+                
+                return `
+                    <div class="flex items-center justify-between p-3 bg-slate-700 rounded-lg ${rank.isUser ? 'ring-2 ring-blue-500' : ''}">
+                        <div class="flex items-center gap-3">
+                            <span class="${medalClass} font-bold">${medal}</span>
+                            <div>
+                                <div class="text-white font-medium">${rank.name}</div>
+                                <div class="text-slate-400 text-sm">${rank.wins}승 / ${rank.totalBets}전</div>
+                            </div>
+                        </div>
+                        <div class="text-yellow-400 font-bold">${rank.points.toLocaleString()}P</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 전체 랭킹 표시
+        function showRankings() {
+            const modal = document.getElementById('rankingModal');
+            const container = document.getElementById('fullRankings');
+            
+            container.innerHTML = rankings.map(rank => {
+                const medalClass = rank.position === 1 ? 'rank-gold' : 
+                                 rank.position === 2 ? 'rank-silver' : 
+                                 rank.position === 3 ? 'rank-bronze' : 'text-slate-300';
+                
+                const medal = rank.position === 1 ? '🥇' : 
+                             rank.position === 2 ? '🥈' : 
+                             rank.position === 3 ? '🥉' : `#${rank.position}`;
+                
+                const winRate = rank.totalBets > 0 ? ((rank.wins / rank.totalBets) * 100).toFixed(1) : '0.0';
+                
+                return `
+                    <div class="flex items-center justify-between p-4 bg-slate-700 rounded-lg ${rank.isUser ? 'ring-2 ring-blue-500' : ''}">
+                        <div class="flex items-center gap-4">
+                            <span class="${medalClass} font-bold text-lg">${medal}</span>
+                            <div>
+                                <div class="text-white font-medium">${rank.name}</div>
+                                <div class="text-slate-400 text-sm">
+                                    ${rank.wins}승 ${rank.totalBets - rank.wins}패 (승률 ${winRate}%)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-yellow-400 font-bold text-lg">${rank.points.toLocaleString()}P</div>
+                    </div>
+                `;
+            }).join('');
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // 랭킹 모달 숨기기
+        function hideRankings() {
+            document.getElementById('rankingModal').classList.add('hidden');
+            document.getElementById('rankingModal').classList.remove('flex');
+        }
+
+        // 관리자 패널 표시
+        function showAdminPanel() {
+            updateAdminStats();
+            document.getElementById('adminModal').classList.remove('hidden');
+            document.getElementById('adminModal').classList.add('flex');
+        }
+
+        // 관리자 패널 숨기기
+        function hideAdminPanel() {
+            document.getElementById('adminModal').classList.add('hidden');
+            document.getElementById('adminModal').classList.remove('flex');
+        }
+
+        // 관리자 통계 업데이트
+        function updateAdminStats() {
+            document.getElementById('adminLiveCount').textContent = liveMatches.length;
+            document.getElementById('adminUpcomingCount').textContent = upcomingMatches.length;
+            document.getElementById('adminBetCount').textContent = currentBets.length;
+        }
+
+        // 포인트 추가
+        function addPoints() {
+            const amount = parseInt(document.getElementById('pointsToAdd').value);
+            if (isNaN(amount) || amount <= 0) {
+                alert('올바른 포인트를 입력해주세요.');
+                return;
+            }
+            
+            userPoints += amount;
+            updateUI();
+            saveUserData();
+            
+            // 성공 애니메이션
+            showWinAnimation(amount);
+            
+            alert(`✅ ${amount.toLocaleString()}P가 추가되었습니다!\n현재 포인트: ${userPoints.toLocaleString()}P`);
+            document.getElementById('pointsToAdd').value = '';
+        }
+
+        // 포인트 차감
+        function removePoints() {
+            const amount = parseInt(document.getElementById('pointsToAdd').value);
+            if (isNaN(amount) || amount <= 0) {
+                alert('올바른 포인트를 입력해주세요.');
+                return;
+            }
+            
+            if (amount > userPoints) {
+                alert('차감할 포인트가 현재 포인트보다 많습니다.');
+                return;
+            }
+            
+            userPoints -= amount;
+            updateUI();
+            saveUserData();
+            
+            alert(`✅ ${amount.toLocaleString()}P가 차감되었습니다!\n현재 포인트: ${userPoints.toLocaleString()}P`);
+            document.getElementById('pointsToAdd').value = '';
+        }
+
+        // 포인트 설정
+        function setPoints(amount) {
+            userPoints = amount;
+            updateUI();
+            saveUserData();
+            
+            alert(`✅ 포인트가 ${amount.toLocaleString()}P로 설정되었습니다!`);
+        }
+
+        // 포인트 초기화
+        function resetPoints() {
+            if (confirm('정말로 포인트를 10,000P로 초기화하시겠습니까?')) {
+                userPoints = 10000;
+                updateUI();
+                saveUserData();
+                alert('✅ 포인트가 초기화되었습니다!');
+            }
+        }
+
+        // 강제 경기 생성
+        function forceCreateMatch() {
+            const newMatch = createRandomMatch(true);
+            liveMatches.push(newMatch);
+            updateLiveMatches();
+            updateAdminStats();
+            
+            alert(`✅ 새로운 ${newMatch.sport} 경기가 생성되었습니다!`);
+        }
+
+        // 모든 경기 종료
+        function endAllMatches() {
+            if (confirm('정말로 모든 진행 중인 경기를 종료하시겠습니까?')) {
+                // 각 경기에 대해 랜덤 결과 생성
+                liveMatches.forEach(match => {
+                    let winner;
+                    if (match.isRace) {
+                        winner = Math.floor(Math.random() * match.participants.length) + 1;
+                    } else {
+                        const result = Math.random();
+                        if (result < 0.4) winner = 'team1';
+                        else if (result < 0.8) winner = 'team2';
+                        else winner = 'draw';
+                    }
+                    processBettingResults(match.id, winner);
+                });
+                
+                liveMatches = [];
+                updateLiveMatches();
+                updateAdminStats();
+                
+                alert('✅ 모든 경기가 종료되었습니다!');
+            }
+        }
+
+        // 특별 이벤트 경기 생성
+        function createSpecialEvent() {
+            const specialMatch = {
+                id: Date.now() + Math.random(),
+                sport: '특별 이벤트',
+                team1: '🌟 골든팀',
+                team2: '💎 다이아몬드팀',
+                odds1: '5.00',
+                odds2: '5.00',
+                oddsDraw: '10.00',
+                isLive: true,
+                startTime: Date.now(),
+                duration: 300000, // 5분
+                score1: 0,
+                score2: 0,
+                isSpecial: true
+            };
+            
+            liveMatches.push(specialMatch);
+            updateLiveMatches();
+            updateAdminStats();
+            
+            alert('✨ 특별 이벤트 경기가 생성되었습니다!\n높은 배당률로 큰 수익을 노려보세요!');
+        }
+
+        // 모든 데이터 초기화
+        function resetAllData() {
+            if (confirm('⚠️ 정말로 모든 데이터를 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+                if (confirm('마지막 확인: 베팅 내역, 포인트, 랭킹이 모두 삭제됩니다.')) {
+                    localStorage.removeItem('virtSportsData');
+                    userPoints = 10000;
+                    bettingHistory = [];
+                    currentBets = [];
+                    liveMatches = [];
+                    upcomingMatches = [];
+                    rankings = [];
+                    
+                    // 다시 초기화
+                    init();
+                    
+                    alert('✅ 모든 데이터가 초기화되었습니다!');
+                }
+            }
+        }
+
+        // 데이터 내보내기
+        function exportData() {
+            const data = {
+                userPoints: userPoints,
+                bettingHistory: bettingHistory,
+                rankings: rankings,
+                currentBets: currentBets,
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `virtsports_backup_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            
+            alert('✅ 데이터가 다운로드되었습니다!');
+        }
+
+        // 스포츠 아이콘 가져오기
+        function getSportIcon(sport) {
+            const icons = {
+                '축구': '⚽',
+                '농구': '🏀',
+                '야구': '⚾',
+                '테니스': '🎾',
+                '배구': '🏐',
+                '말경기': '🐎',
+                '개경기': '🐕'
+            };
+            return icons[sport] || '🏆';
+        }
+
+        // 예정 경기를 라이브로 이동
+        function moveUpcomingToLive() {
+            const now = Date.now();
+            const readyMatches = upcomingMatches.filter(match => match.startTime <= now);
+            
+            readyMatches.forEach(match => {
+                match.isLive = true;
+                match.startTime = now;
+                liveMatches.push(match);
+            });
+            
+            upcomingMatches = upcomingMatches.filter(match => match.startTime > now);
+        }
+
+        // 타이머 업데이트
+        function updateMatchTimers() {
+            moveUpcomingToLive();
+            updateLiveMatches();
+            updateUpcomingMatches();
+        }
+
+        // UI 업데이트
+        function updateUI() {
+            document.getElementById('userPoints').textContent = userPoints.toLocaleString();
+            updateTopRankings();
+        }
+
+        // 즉시 경기 생성 및 표시
+        function initializeMatches() {
+            console.log('경기 초기화 시작');
+            
+            // 라이브 경기 강제 생성
+            liveMatches = [
+                {
+                    id: 1001,
+                    sport: '축구',
+                    team1: '레알 마드리드',
+                    team2: '바르셀로나',
+                    odds1: '2.10',
+                    odds2: '1.85',
+                    oddsDraw: '3.20',
+                    isLive: true,
+                    startTime: Date.now(),
+                    duration: 180000,
+                    score1: 1,
+                    score2: 0
+                },
+                {
+                    id: 1002,
+                    sport: '농구',
+                    team1: '레이커스',
+                    team2: '워리어스',
+                    odds1: '1.95',
+                    odds2: '1.90',
+                    oddsDraw: null,
+                    isLive: true,
+                    startTime: Date.now(),
+                    duration: 180000,
+                    score1: 78,
+                    score2: 82
+                },
+                {
+                    id: 1003,
+                    sport: '말경기',
+                    isRace: true,
+                    participants: [
+                        { name: '썬더볼트', number: 1, odds: '2.50', position: 85 },
+                        { name: '골든스피드', number: 2, odds: '3.20', position: 78 },
+                        { name: '로열프린스', number: 3, odds: '4.10', position: 72 },
+                        { name: '파이어스톰', number: 4, odds: '5.50', position: 68 },
+                        { name: '윈드러너', number: 5, odds: '6.80', position: 65 },
+                        { name: '블랙다이아몬드', number: 6, odds: '8.20', position: 60 }
+                    ],
+                    isLive: true,
+                    startTime: Date.now(),
+                    duration: 180000,
+                    raceDistance: '1200m'
+                }
+            ];
+            
+            console.log('생성된 경기 수:', liveMatches.length);
+            
+            // 즉시 UI 업데이트
+            updateLiveMatches();
+            generateUpcomingMatches();
+            updateUpcomingMatches();
+            generateRankings();
+            updateUI();
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('페이지 로드됨');
+            loadUserData();
+            showSection('live');
+            initializeMatches();
+            
+            // 타이머 시작
+            setInterval(processMatchResults, 180000);
+            setInterval(generateNewMatch, 30000);
+            setInterval(updateMatchTimers, 1000);
+        });
+
+        // 페이지가 완전히 로드되지 않았을 경우를 대비한 백업
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeMatches);
+        } else {
+            // 이미 로드된 경우 즉시 실행
+            setTimeout(function() {
+                loadUserData();
+                showSection('live');
+                initializeMatches();
+            }, 50);
+        }
+
+        // 페이지 언로드 시 데이터 저장
+        window.onbeforeunload = function() {
+            saveUserData();
+        };
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9711d2fc3292aa4a',t:'MTc1NTUyNDQzOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
