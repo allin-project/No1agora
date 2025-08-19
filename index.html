@@ -64,20 +64,61 @@
         .section-card:hover {
             border-color: #d1d5db;
         }
+
+        .modal {
+            backdrop-filter: blur(4px);
+        }
+
+        .comment-item {
+            border-left: 3px solid #e5e7eb;
+            transition: all 0.2s ease;
+        }
+
+        .comment-item:hover {
+            border-left-color: #3b82f6;
+            background-color: #f8fafc;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
     </style>
 </head>
 <body class="bg-gray-50">
+    <!-- 알림 -->
+    <div id="notification" class="notification bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+        <div class="flex items-center space-x-2">
+            <span id="notificationText">알림 메시지</span>
+            <button onclick="hideNotification()" class="text-white hover:text-gray-200">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
     <!-- 헤더 -->
     <header class="bg-white shadow-sm border-b">
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center space-x-4">
-                    <h1 class="text-2xl font-bold text-gray-900">스포츠갤러리</h1>
+                    <h1 class="text-2xl font-bold text-gray-900 cursor-pointer" onclick="showMainPage()">스포츠갤러리</h1>
                 </div>
                 <div class="flex items-center space-x-4">
                     <div class="relative">
-                        <input type="text" placeholder="갤러리 검색..." class="w-64 px-4 py-2 border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                        <button class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+                        <input type="text" id="searchInput" placeholder="갤러리 검색..." 
+                               class="w-64 px-4 py-2 border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                               onkeyup="performSearch()" onkeypress="handleSearchEnter(event)">
+                        <button onclick="performSearch()" class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
@@ -88,547 +129,558 @@
                         <span class="text-sm text-gray-600">보유 포인트:</span>
                         <span id="userPoints" class="font-bold text-yellow-600">125,000P</span>
                     </div>
-                    <button class="bg-gray-900 text-white px-6 py-2 hover:bg-gray-800 transition-colors">로그인</button>
+                    <div id="authButtons">
+                        <button onclick="showLoginModal()" class="bg-gray-900 text-white px-6 py-2 hover:bg-gray-800 transition-colors">로그인</button>
+                    </div>
+                    <div id="userInfo" class="hidden flex items-center space-x-3">
+                        <span id="welcomeUser" class="text-gray-700"></span>
+                        <button onclick="showWriteModal()" class="bg-blue-600 text-white px-4 py-2 hover:bg-blue-700 transition-colors rounded">글쓰기</button>
+                        <button onclick="logout()" class="text-gray-600 hover:text-gray-800">로그아웃</button>
+                    </div>
                 </div>
             </div>
         </div>
     </header>
 
     <div class="max-w-7xl mx-auto px-4 py-6">
-        <!-- 이벤트 배너 (쉽게 수정 가능) -->
-        <div class="mb-6">
-            <!-- 배너 스타일: 배경색, 그라데이션, 이미지 등을 여기서 변경하세요 -->
-            <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 relative overflow-hidden min-h-[160px] flex items-center" 
-                 style="background-image: url(''); background-size: cover; background-position: center;">
-                
-                <!-- 배경 오버레이 (이미지 사용시 텍스트 가독성을 위해) -->
-                <div class="absolute inset-0 bg-black bg-opacity-30"></div>
-                
-                <div class="relative z-10 w-full">
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1">
-                            <!-- 메인 제목 (여기서 텍스트 변경) -->
-                            <h2 class="text-2xl font-bold mb-2">🎉 신규 회원 특별 이벤트</h2>
+        <!-- 메인 페이지 -->
+        <div id="mainPage">
+            <!-- 이벤트 배너 -->
+            <div class="mb-6">
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 relative overflow-hidden min-h-[160px] flex items-center">
+                    <div class="absolute inset-0 bg-black bg-opacity-30"></div>
+                    <div class="relative z-10 w-full">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <h2 class="text-2xl font-bold mb-2">🎉 신규 회원 특별 이벤트</h2>
+                                <p class="text-blue-100 mb-4">첫 베팅 최대 10만원 보너스 + 무료 분석 리포트 제공!</p>
+                                <div class="flex items-center space-x-4">
+                                    <button onclick="showRegisterModal()" class="bg-white text-blue-600 px-6 py-2 font-semibold hover:bg-gray-100 transition-colors rounded">
+                                        지금 가입하기
+                                    </button>
+                                    <span class="text-sm text-blue-200">⏰ 이벤트 종료까지 <span class="font-bold text-yellow-300">7일 12시간</span> 남음</span>
+                                </div>
+                            </div>
+                            <div class="hidden md:block ml-6">
+                                <div class="text-6xl opacity-20">🏆</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 transform rotate-45 translate-x-16 -translate-y-16"></div>
+                    <div class="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 transform rotate-45 -translate-x-12 translate-y-12"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- 메인 콘텐츠 -->
+                <div class="lg:col-span-3 space-y-6">
+                    <!-- 검색 결과 -->
+                    <div id="searchResults" class="section-card hidden">
+                        <div class="p-6 border-b border-gray-100">
+                            <h2 class="text-lg font-semibold text-gray-900">검색 결과</h2>
+                            <button onclick="clearSearch()" class="text-sm text-blue-600 hover:text-blue-800">검색 초기화</button>
+                        </div>
+                        <div id="searchResultsList" class="divide-y divide-gray-100">
+                            <!-- 검색 결과가 여기에 표시됩니다 -->
+                        </div>
+                    </div>
+
+                    <!-- 실시간 HOT 게시물 -->
+                    <div class="section-card" id="hotPosts">
+                        <div class="p-6 border-b border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-lg font-semibold text-gray-900">실시간 HOT 게시물</h2>
+                                <span class="live-indicator bg-red-500 text-white text-xs px-3 py-1 font-medium">LIVE</span>
+                            </div>
+                        </div>
+                        <div id="postsList" class="divide-y divide-gray-100">
+                            <!-- 게시물들이 여기에 동적으로 추가됩니다 -->
+                        </div>
+                    </div>
+
+                    <!-- 실시간 밈 & 사진 -->
+                    <div class="section-card">
+                        <div class="p-6 border-b border-gray-100">
+                            <h2 class="text-lg font-semibold text-gray-900">실시간 밈 & 사진</h2>
+                        </div>
+                        <div class="p-6">
+                            <div class="photo-grid">
+                                <div class="photo-item bg-blue-600 flex items-center justify-center text-white font-medium" onclick="showPhotoModal('손흥민 골', '축구갤')">
+                                    <div class="text-center">
+                                        <div class="text-sm font-semibold">손흥민 골</div>
+                                        <div class="text-xs opacity-80 mt-1">축구갤</div>
+                                    </div>
+                                </div>
+                                <div class="photo-item bg-green-600 flex items-center justify-center text-white font-medium" onclick="showPhotoModal('홈런 순간', '야구갤')">
+                                    <div class="text-center">
+                                        <div class="text-sm font-semibold">홈런 순간</div>
+                                        <div class="text-xs opacity-80 mt-1">야구갤</div>
+                                    </div>
+                                </div>
+                                <div class="photo-item bg-purple-600 flex items-center justify-center text-white font-medium" onclick="showPhotoModal('덩크샷', '농구갤')">
+                                    <div class="text-center">
+                                        <div class="text-sm font-semibold">덩크샷</div>
+                                        <div class="text-xs opacity-80 mt-1">농구갤</div>
+                                    </div>
+                                </div>
+                                <div class="photo-item bg-red-600 flex items-center justify-center text-white font-medium" onclick="showPhotoModal('베팅 실패', '유머갤')">
+                                    <div class="text-center">
+                                        <div class="text-sm font-semibold">베팅 실패</div>
+                                        <div class="text-xs opacity-80 mt-1">유머갤</div>
+                                    </div>
+                                </div>
+                                <div class="photo-item bg-orange-600 flex items-center justify-center text-white font-medium" onclick="showPhotoModal('예측 성공', '분석갤')">
+                                    <div class="text-center">
+                                        <div class="text-sm font-semibold">예측 성공</div>
+                                        <div class="text-xs opacity-80 mt-1">분석갤</div>
+                                    </div>
+                                </div>
+                                <div class="photo-item bg-gray-700 flex items-center justify-center text-white font-medium" onclick="showPhotoModal('핫한 경기', '실시간')">
+                                    <div class="text-center">
+                                        <div class="text-sm font-semibold">핫한 경기</div>
+                                        <div class="text-xs opacity-80 mt-1">실시간</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 베스트 게시물 -->
+                    <div class="section-card">
+                        <div class="p-6 border-b border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-lg font-semibold text-gray-900">베스트 게시물</h2>
+                                <button class="text-sm text-blue-600 hover:text-blue-800 font-medium">더보기</button>
+                            </div>
+                        </div>
+                        <div class="divide-y divide-gray-100">
+                            <div class="p-6 hover:bg-gray-50 cursor-pointer transition-colors" onclick="showPostDetail('월드컵 우승 예측 완벽 적중한 전설의 글', '예언자', '작년 월드컵 때 아르헨티나 우승을 정확히 예측했던 그 글입니다...')">
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-16 h-16 bg-blue-600 flex items-center justify-center text-white font-bold text-lg">축구</div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-3 mb-2">
+                                            <span class="text-sm text-blue-600 font-medium">[축구갤]</span>
+                                            <span class="bg-red-500 text-white text-xs px-2 py-1 font-medium">베스트</span>
+                                        </div>
+                                        <h3 class="font-semibold text-gray-900 mb-2">월드컵 우승 예측 완벽 적중한 전설의 글</h3>
+                                        <p class="text-sm text-gray-600 mb-3">작년 월드컵 때 아르헨티나 우승을 정확히 예측했던 그 글입니다...</p>
+                                        <div class="flex items-center space-x-6 text-sm text-gray-500">
+                                            <span class="font-medium">예언자</span>
+                                            <span>1일전</span>
+                                            <span>조회 15,247</span>
+                                            <span class="text-red-500 font-medium">추천 892</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             
-                            <!-- 부제목 (여기서 텍스트 변경) -->
-                            <p class="text-blue-100 mb-4">첫 베팅 최대 10만원 보너스 + 무료 분석 리포트 제공!</p>
+                            <div class="p-6 hover:bg-gray-50 cursor-pointer transition-colors" onclick="showPostDetail('오타니 홈런 개수 정확히 맞춘 썰', '야구박사', '시즌 시작 전에 오타니 홈런 개수를 정확히 예측했던 레전드...')">
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-16 h-16 bg-green-600 flex items-center justify-center text-white font-bold text-lg">야구</div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-3 mb-2">
+                                            <span class="text-sm text-green-600 font-medium">[야구갤]</span>
+                                            <span class="bg-red-500 text-white text-xs px-2 py-1 font-medium">베스트</span>
+                                        </div>
+                                        <h3 class="font-semibold text-gray-900 mb-2">오타니 홈런 개수 정확히 맞춘 썰</h3>
+                                        <p class="text-sm text-gray-600 mb-3">시즌 시작 전에 오타니 홈런 개수를 정확히 예측했던 레전드...</p>
+                                        <div class="flex items-center space-x-6 text-sm text-gray-500">
+                                            <span class="font-medium">야구박사</span>
+                                            <span>2일전</span>
+                                            <span>조회 8,934</span>
+                                            <span class="text-red-500 font-medium">추천 567</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 사이드바 -->
+                <div class="space-y-6">
+                    <!-- 스포츠 갤러리 목록 -->
+                    <div class="section-card">
+                        <div class="p-4 border-b border-gray-100">
+                            <h3 class="font-semibold text-gray-900">스포츠 갤러리</h3>
+                        </div>
+                        <div class="p-2">
+                            <div class="grid grid-cols-2 gap-1 text-sm">
+                                <div class="gallery-item p-2 cursor-pointer" onclick="filterByGallery('축구갤')">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium text-gray-900">축구갤</span>
+                                        <span class="text-xs text-gray-500">1,247</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="gallery-item p-2 cursor-pointer" onclick="filterByGallery('야구갤')">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium text-gray-900">야구갤</span>
+                                        <span class="text-xs text-gray-500">892</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="gallery-item p-2 cursor-pointer" onclick="filterByGallery('농구갤')">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium text-gray-900">농구갤</span>
+                                        <span class="text-xs text-gray-500">634</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="gallery-item p-2 cursor-pointer" onclick="filterByGallery('배구갤')">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium text-gray-900">배구갤</span>
+                                        <span class="text-xs text-gray-500">423</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="gallery-item p-2 cursor-pointer" onclick="filterByGallery('테니스갤')">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium text-gray-900">테니스갤</span>
+                                        <span class="text-xs text-gray-500">312</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="gallery-item p-2 cursor-pointer" onclick="filterByGallery('탁구갤')">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium text-gray-900">탁구갤</span>
+                                        <span class="text-xs text-gray-500">267</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="gallery-item p-2 cursor-pointer" onclick="filterByGallery('경마갤')">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium text-gray-900">경마갤</span>
+                                        <span class="text-xs text-gray-500">756</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="gallery-item p-2 cursor-pointer" onclick="filterByGallery('경륜갤')">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium text-gray-900">경륜갤</span>
+                                        <span class="text-xs text-gray-500">445</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="gallery-item p-2 cursor-pointer" onclick="filterByGallery('격투기갤')">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium text-gray-900">격투기갤</span>
+                                        <span class="text-xs text-gray-500">523</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="gallery-item p-2 cursor-pointer" onclick="filterByGallery('e스포츠갤')">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium text-gray-900">e스포츠갤</span>
+                                        <span class="text-xs text-gray-500">1,089</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-center">
+                                <button class="text-xs text-blue-600 hover:text-blue-800 font-medium">더보기 +</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 실시간 인플레이 -->
+                    <div class="section-card">
+                        <div class="p-5 border-b border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-semibold text-gray-900">실시간 인플레이</h3>
+                                <span class="live-indicator bg-green-500 text-white text-xs px-3 py-1 font-medium">LIVE</span>
+                            </div>
+                        </div>
+                        <div class="p-4 space-y-3">
+                            <div class="border border-green-200 bg-green-50 p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-semibold text-sm">맨시티 vs 아스널</span>
+                                    <span class="text-xs bg-green-500 text-white px-2 py-1 font-medium">진행중 67'</span>
+                                </div>
+                                <div class="text-xs text-gray-600 mb-2">현재 스코어: 1-1</div>
+                                <div class="grid grid-cols-3 gap-1 text-xs">
+                                    <button class="betting-btn bg-white border p-2 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer rounded" data-team="맨시티 승" data-odds="2.10" data-match="맨시티 vs 아스널">
+                                        <div>맨시티 승</div>
+                                        <div class="font-semibold">2.10</div>
+                                    </button>
+                                    <button class="betting-btn bg-white border p-2 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer rounded" data-team="무승부" data-odds="3.40" data-match="맨시티 vs 아스널">
+                                        <div>무승부</div>
+                                        <div class="font-semibold">3.40</div>
+                                    </button>
+                                    <button class="betting-btn bg-white border p-2 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer rounded" data-team="아스널 승" data-odds="3.80" data-match="맨시티 vs 아스널">
+                                        <div>아스널 승</div>
+                                        <div class="font-semibold">3.80</div>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-blue-200 bg-blue-50 p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-semibold text-sm">레이커스 vs 워리어스</span>
+                                    <span class="text-xs bg-blue-500 text-white px-2 py-1 font-medium">3쿼터</span>
+                                </div>
+                                <div class="text-xs text-gray-600 mb-2">현재 스코어: 89-92</div>
+                                <div class="grid grid-cols-2 gap-1 text-xs">
+                                    <button class="betting-btn bg-white border p-2 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer rounded" data-team="레이커스" data-odds="2.25" data-match="레이커스 vs 워리어스">
+                                        <div>레이커스</div>
+                                        <div class="font-semibold">2.25</div>
+                                    </button>
+                                    <button class="betting-btn bg-white border p-2 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer rounded" data-team="워리어스" data-odds="1.65" data-match="레이커스 vs 워리어스">
+                                        <div>워리어스</div>
+                                        <div class="font-semibold">1.65</div>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-purple-200 bg-purple-50 p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-semibold text-sm">T1 vs Gen.G</span>
+                                    <span class="text-xs bg-purple-500 text-white px-2 py-1 font-medium">2경기</span>
+                                </div>
+                                <div class="text-xs text-gray-600 mb-2">현재: 1-0 (T1 승)</div>
+                                <div class="grid grid-cols-2 gap-1 text-xs">
+                                    <button class="betting-btn bg-white border p-2 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer rounded" data-team="T1 승" data-odds="1.45" data-match="T1 vs Gen.G">
+                                        <div>T1 승</div>
+                                        <div class="font-semibold">1.45</div>
+                                    </button>
+                                    <button class="betting-btn bg-white border p-2 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer rounded" data-team="Gen.G 승" data-odds="2.75" data-match="T1 vs Gen.G">
+                                        <div>Gen.G 승</div>
+                                        <div class="font-semibold">2.75</div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 오늘의 주요 경기 -->
+                    <div class="section-card">
+                        <div class="p-5 border-b border-gray-100">
+                            <h3 class="font-semibold text-gray-900">오늘의 주요 경기</h3>
+                        </div>
+                        <div class="p-4 space-y-3">
+                            <div class="border border-gray-200 p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-semibold text-sm">서울 vs 부산</span>
+                                    <span class="text-xs text-gray-500">19:30</span>
+                                </div>
+                                <div class="text-xs text-gray-600 mb-2">K리그1 32라운드</div>
+                                <div class="flex justify-between text-xs">
+                                    <span>서울: 2.10</span>
+                                    <span>무: 3.20</span>
+                                    <span>부산: 3.40</span>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-semibold text-sm">두산 vs 키움</span>
+                                    <span class="text-xs text-gray-500">18:30</span>
+                                </div>
+                                <div class="text-xs text-gray-600 mb-2">KBO 정규시즌</div>
+                                <div class="flex justify-between text-xs">
+                                    <span>두산: 1.85</span>
+                                    <span>키움: 1.95</span>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-semibold text-sm">5경주 경마</span>
+                                    <span class="text-xs text-gray-500">15:40</span>
+                                </div>
+                                <div class="text-xs text-gray-600 mb-2">서울경마공원</div>
+                                <div class="text-xs">
+                                    <div>1번마: 3.2배 | 2번마: 5.1배</div>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-semibold text-sm">안세영 vs 마린</span>
+                                    <span class="text-xs text-gray-500">21:00</span>
+                                </div>
+                                <div class="text-xs text-gray-600 mb-2">배드민턴 월드투어</div>
+                                <div class="flex justify-between text-xs">
+                                    <span>안세영: 1.25</span>
+                                    <span>마린: 3.75</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 실시간 베팅 정보 -->
+                    <div class="section-card">
+                        <div class="p-5 border-b border-gray-100">
+                            <h3 class="font-semibold text-gray-900">실시간 베팅 정보</h3>
+                        </div>
+                        <div class="p-5 space-y-4">
+                            <div class="border border-gray-200 p-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-semibold text-gray-900">맨시티 vs 아스널</span>
+                                    <span class="text-xs text-red-500 font-medium">진행중</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2 text-sm">
+                                    <div class="text-center">
+                                        <div class="text-gray-600">맨시티 승</div>
+                                        <div class="font-semibold">1.85</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-gray-600">무승부</div>
+                                        <div class="font-semibold">3.20</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-gray-600">아스널 승</div>
+                                        <div class="font-semibold">4.10</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 p-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-semibold text-gray-900">KIA vs LG</span>
+                                    <span class="text-xs text-gray-500 font-medium">19:00</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-sm">
+                                    <div class="text-center">
+                                        <div class="text-gray-600">KIA 승</div>
+                                        <div class="font-semibold">2.10</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-gray-600">LG 승</div>
+                                        <div class="font-semibold">1.75</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 p-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-semibold text-gray-900">레이커스 vs 워리어스</span>
+                                    <span class="text-xs text-gray-500 font-medium">11:00</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-sm">
+                                    <div class="text-center">
+                                        <div class="text-gray-600">레이커스</div>
+                                        <div class="font-semibold">1.95</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-gray-600">워리어스</div>
+                                        <div class="font-semibold">1.90</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 인기 유저 -->
+                    <div class="section-card">
+                        <div class="p-5 border-b border-gray-100">
+                            <h3 class="font-semibold text-gray-900">이주의 베팅 고수</h3>
+                        </div>
+                        <div class="p-5 space-y-4">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 bg-yellow-500 flex items-center justify-center text-white font-bold">1</div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-gray-900">베팅왕</div>
+                                    <div class="text-sm text-gray-500">적중률 89.2%</div>
+                                </div>
+                                <div class="text-sm text-green-600 font-bold">+2,340만원</div>
+                            </div>
                             
                             <div class="flex items-center space-x-4">
-                                <!-- 버튼 (텍스트와 색상 변경 가능) -->
-                                <button class="bg-white text-blue-600 px-6 py-2 font-semibold hover:bg-gray-100 transition-colors rounded">
-                                    지금 가입하기
-                                </button>
-                                
-                                <!-- 카운트다운 텍스트 (여기서 변경) -->
-                                <span class="text-sm text-blue-200">⏰ 이벤트 종료까지 <span class="font-bold text-yellow-300">7일 12시간</span> 남음</span>
+                                <div class="w-10 h-10 bg-gray-400 flex items-center justify-center text-white font-bold">2</div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-gray-900">예언자</div>
+                                    <div class="text-sm text-gray-500">적중률 87.5%</div>
+                                </div>
+                                <div class="text-sm text-green-600 font-bold">+1,890만원</div>
+                            </div>
+                            
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 bg-orange-500 flex items-center justify-center text-white font-bold">3</div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-gray-900">스포츠박사</div>
+                                    <div class="text-sm text-gray-500">적중률 85.1%</div>
+                                </div>
+                                <div class="text-sm text-green-600 font-bold">+1,567만원</div>
                             </div>
                         </div>
-                        
-                        <!-- 우측 아이콘/이미지 영역 (이모지나 이미지로 변경 가능) -->
-                        <div class="hidden md:block ml-6">
-                            <div class="text-6xl opacity-20">🏆</div>
-                            <!-- 이미지를 사용하려면 위 div를 아래와 같이 교체:
-                            <img src="your-image-url.jpg" alt="이벤트 이미지" class="w-24 h-24 object-cover rounded-lg opacity-80">
-                            -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 게시물 상세 페이지 -->
+        <div id="postDetailPage" class="hidden">
+            <div class="mb-4">
+                <button onclick="showMainPage()" class="text-blue-600 hover:text-blue-800 flex items-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    <span>목록으로 돌아가기</span>
+                </button>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm border">
+                <div class="p-6 border-b border-gray-100">
+                    <h1 id="postDetailTitle" class="text-2xl font-bold text-gray-900 mb-4"></h1>
+                    <div class="flex items-center space-x-6 text-sm text-gray-500">
+                        <span id="postDetailAuthor" class="font-medium"></span>
+                        <span id="postDetailDate"></span>
+                        <span>조회 1,247</span>
+                        <span class="text-red-500">추천 89</span>
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <div id="postDetailContent" class="prose max-w-none text-gray-700 leading-relaxed mb-8">
+                        <!-- 게시물 내용이 여기에 표시됩니다 -->
+                    </div>
+                    
+                    <div class="flex items-center space-x-4 pt-4 border-t border-gray-100">
+                        <button onclick="likePost()" class="flex items-center space-x-2 bg-red-50 text-red-600 px-4 py-2 rounded hover:bg-red-100 transition-colors">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>추천 <span id="likeCount">89</span></span>
+                        </button>
+                        <button class="flex items-center space-x-2 bg-gray-50 text-gray-600 px-4 py-2 rounded hover:bg-gray-100 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+                            </svg>
+                            <span>공유</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 댓글 섹션 -->
+            <div class="bg-white rounded-lg shadow-sm border mt-6">
+                <div class="p-6 border-b border-gray-100">
+                    <h3 class="text-lg font-semibold text-gray-900">댓글 <span id="commentCount" class="text-blue-600">0</span></h3>
+                </div>
+                
+                <!-- 댓글 작성 -->
+                <div class="p-6 border-b border-gray-100">
+                    <div class="flex space-x-4">
+                        <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                            <span class="text-gray-600 font-medium" id="commentUserInitial">?</span>
+                        </div>
+                        <div class="flex-1">
+                            <textarea id="commentInput" placeholder="댓글을 입력하세요..." 
+                                    class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none" 
+                                    rows="3"></textarea>
+                            <div class="flex justify-between items-center mt-3">
+                                <span class="text-sm text-gray-500">최대 500자</span>
+                                <button onclick="addComment()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">
+                                    댓글 작성
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- 장식 요소들 (제거하거나 수정 가능) -->
-                <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 transform rotate-45 translate-x-16 -translate-y-16"></div>
-                <div class="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 transform rotate-45 -translate-x-12 translate-y-12"></div>
-            </div>
-            
-            <!-- 배너 수정 가이드 (개발자용 - 실제 서비스에서는 제거) -->
-            <!-- 
-            배너 수정 방법:
-            1. 배경색 변경: from-blue-600 to-purple-600 부분을 다른 색상으로 변경
-            2. 배경 이미지: style="background-image: url('이미지URL');" 에 이미지 URL 입력
-            3. 텍스트 변경: h2, p 태그 안의 내용 수정
-            4. 버튼 색상: bg-white text-blue-600 부분 변경
-            5. 아이콘 변경: 🏆 이모지를 다른 이모지나 이미지로 교체
-            -->
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <!-- 메인 콘텐츠 -->
-            <div class="lg:col-span-3 space-y-6">
-                <!-- 실시간 HOT 게시물 -->
-                <div class="section-card">
-                    <div class="p-6 border-b border-gray-100">
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-lg font-semibold text-gray-900">실시간 HOT 게시물</h2>
-                            <span class="live-indicator bg-red-500 text-white text-xs px-3 py-1 font-medium">LIVE</span>
-                        </div>
-                    </div>
-                    <div class="divide-y divide-gray-100">
-                        <div class="p-5 hover:bg-gray-50 cursor-pointer transition-colors">
-                            <div class="flex items-center space-x-3">
-                                <span class="hot-post px-3 py-1 text-xs font-medium">HOT</span>
-                                <span class="text-sm text-blue-600 font-medium">[축구갤]</span>
-                                <span class="font-medium text-gray-900">손흥민 골 예측 성공했다 ㅋㅋㅋ</span>
-                                <span class="text-red-500 text-sm font-medium">[127]</span>
-                            </div>
-                            <div class="mt-3 flex items-center space-x-6 text-sm text-gray-500">
-                                <span class="font-medium">베팅왕</span>
-                                <span>2분전</span>
-                                <span>조회 1,247</span>
-                                <span class="text-red-500">추천 89</span>
-                            </div>
-                        </div>
-                        
-                        <div class="p-5 hover:bg-gray-50 cursor-pointer transition-colors">
-                            <div class="flex items-center space-x-3">
-                                <span class="new-post px-3 py-1 text-xs font-medium">NEW</span>
-                                <span class="text-sm text-green-600 font-medium">[야구갤]</span>
-                                <span class="font-medium text-gray-900">오늘 KIA vs LG 경기 분석글</span>
-                                <span class="text-red-500 text-sm font-medium">[45]</span>
-                            </div>
-                            <div class="mt-3 flex items-center space-x-6 text-sm text-gray-500">
-                                <span class="font-medium">야구고수</span>
-                                <span>5분전</span>
-                                <span>조회 523</span>
-                                <span class="text-red-500">추천 34</span>
-                            </div>
-                        </div>
-                        
-                        <div class="p-5 hover:bg-gray-50 cursor-pointer transition-colors">
-                            <div class="flex items-center space-x-3">
-                                <span class="hot-post px-3 py-1 text-xs font-medium">HOT</span>
-                                <span class="text-sm text-purple-600 font-medium">[농구갤]</span>
-                                <span class="font-medium text-gray-900">NBA 파이널 예측 맞춘 사람 있나?</span>
-                                <span class="text-red-500 text-sm font-medium">[89]</span>
-                            </div>
-                            <div class="mt-3 flex items-center space-x-6 text-sm text-gray-500">
-                                <span class="font-medium">농구매니아</span>
-                                <span>8분전</span>
-                                <span>조회 892</span>
-                                <span class="text-red-500">추천 67</span>
-                            </div>
-                        </div>
-                        
-                        <div class="p-5 hover:bg-gray-50 cursor-pointer transition-colors">
-                            <div class="flex items-center space-x-3">
-                                <span class="bg-orange-500 text-white px-3 py-1 text-xs font-medium">밈</span>
-                                <span class="text-sm text-orange-600 font-medium">[유머갤]</span>
-                                <span class="font-medium text-gray-900">베팅 실패한 사람들 표정.jpg</span>
-                                <span class="text-red-500 text-sm font-medium">[234]</span>
-                            </div>
-                            <div class="mt-3 flex items-center space-x-6 text-sm text-gray-500">
-                                <span class="font-medium">웃음제조기</span>
-                                <span>12분전</span>
-                                <span>조회 2,156</span>
-                                <span class="text-red-500">추천 178</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 실시간 밈 & 사진 -->
-                <div class="section-card">
-                    <div class="p-6 border-b border-gray-100">
-                        <h2 class="text-lg font-semibold text-gray-900">실시간 밈 & 사진</h2>
-                    </div>
-                    <div class="p-6">
-                        <div class="photo-grid">
-                            <div class="photo-item bg-blue-600 flex items-center justify-center text-white font-medium">
-                                <div class="text-center">
-                                    <div class="text-sm font-semibold">손흥민 골</div>
-                                    <div class="text-xs opacity-80 mt-1">축구갤</div>
-                                </div>
-                            </div>
-                            <div class="photo-item bg-green-600 flex items-center justify-center text-white font-medium">
-                                <div class="text-center">
-                                    <div class="text-sm font-semibold">홈런 순간</div>
-                                    <div class="text-xs opacity-80 mt-1">야구갤</div>
-                                </div>
-                            </div>
-                            <div class="photo-item bg-purple-600 flex items-center justify-center text-white font-medium">
-                                <div class="text-center">
-                                    <div class="text-sm font-semibold">덩크샷</div>
-                                    <div class="text-xs opacity-80 mt-1">농구갤</div>
-                                </div>
-                            </div>
-                            <div class="photo-item bg-red-600 flex items-center justify-center text-white font-medium">
-                                <div class="text-center">
-                                    <div class="text-sm font-semibold">베팅 실패</div>
-                                    <div class="text-xs opacity-80 mt-1">유머갤</div>
-                                </div>
-                            </div>
-                            <div class="photo-item bg-orange-600 flex items-center justify-center text-white font-medium">
-                                <div class="text-center">
-                                    <div class="text-sm font-semibold">예측 성공</div>
-                                    <div class="text-xs opacity-80 mt-1">분석갤</div>
-                                </div>
-                            </div>
-                            <div class="photo-item bg-gray-700 flex items-center justify-center text-white font-medium">
-                                <div class="text-center">
-                                    <div class="text-sm font-semibold">핫한 경기</div>
-                                    <div class="text-xs opacity-80 mt-1">실시간</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 베스트 게시물 -->
-                <div class="section-card">
-                    <div class="p-6 border-b border-gray-100">
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-lg font-semibold text-gray-900">베스트 게시물</h2>
-                            <button class="text-sm text-blue-600 hover:text-blue-800 font-medium">더보기</button>
-                        </div>
-                    </div>
-                    <div class="divide-y divide-gray-100">
-                        <div class="p-6 hover:bg-gray-50 cursor-pointer transition-colors">
-                            <div class="flex items-start space-x-4">
-                                <div class="w-16 h-16 bg-blue-600 flex items-center justify-center text-white font-bold text-lg">축구</div>
-                                <div class="flex-1">
-                                    <div class="flex items-center space-x-3 mb-2">
-                                        <span class="text-sm text-blue-600 font-medium">[축구갤]</span>
-                                        <span class="bg-red-500 text-white text-xs px-2 py-1 font-medium">베스트</span>
-                                    </div>
-                                    <h3 class="font-semibold text-gray-900 mb-2">월드컵 우승 예측 완벽 적중한 전설의 글</h3>
-                                    <p class="text-sm text-gray-600 mb-3">작년 월드컵 때 아르헨티나 우승을 정확히 예측했던 그 글입니다...</p>
-                                    <div class="flex items-center space-x-6 text-sm text-gray-500">
-                                        <span class="font-medium">예언자</span>
-                                        <span>1일전</span>
-                                        <span>조회 15,247</span>
-                                        <span class="text-red-500 font-medium">추천 892</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="p-6 hover:bg-gray-50 cursor-pointer transition-colors">
-                            <div class="flex items-start space-x-4">
-                                <div class="w-16 h-16 bg-green-600 flex items-center justify-center text-white font-bold text-lg">야구</div>
-                                <div class="flex-1">
-                                    <div class="flex items-center space-x-3 mb-2">
-                                        <span class="text-sm text-green-600 font-medium">[야구갤]</span>
-                                        <span class="bg-red-500 text-white text-xs px-2 py-1 font-medium">베스트</span>
-                                    </div>
-                                    <h3 class="font-semibold text-gray-900 mb-2">오타니 홈런 개수 정확히 맞춘 썰</h3>
-                                    <p class="text-sm text-gray-600 mb-3">시즌 시작 전에 오타니 홈런 개수를 정확히 예측했던 레전드...</p>
-                                    <div class="flex items-center space-x-6 text-sm text-gray-500">
-                                        <span class="font-medium">야구박사</span>
-                                        <span>2일전</span>
-                                        <span>조회 8,934</span>
-                                        <span class="text-red-500 font-medium">추천 567</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 사이드바 -->
-            <div class="space-y-6">
-                <!-- 스포츠 갤러리 목록 -->
-                <div class="section-card">
-                    <div class="p-4 border-b border-gray-100">
-                        <h3 class="font-semibold text-gray-900">스포츠 갤러리</h3>
-                    </div>
-                    <div class="p-2">
-                        <div class="grid grid-cols-2 gap-1 text-sm">
-                            <div class="gallery-item p-2 cursor-pointer">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-medium text-gray-900">축구갤</span>
-                                    <span class="text-xs text-gray-500">1,247</span>
-                                </div>
-                            </div>
-                            
-                            <div class="gallery-item p-2 cursor-pointer">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-medium text-gray-900">야구갤</span>
-                                    <span class="text-xs text-gray-500">892</span>
-                                </div>
-                            </div>
-                            
-                            <div class="gallery-item p-2 cursor-pointer">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-medium text-gray-900">농구갤</span>
-                                    <span class="text-xs text-gray-500">634</span>
-                                </div>
-                            </div>
-                            
-                            <div class="gallery-item p-2 cursor-pointer">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-medium text-gray-900">배구갤</span>
-                                    <span class="text-xs text-gray-500">423</span>
-                                </div>
-                            </div>
-                            
-                            <div class="gallery-item p-2 cursor-pointer">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-medium text-gray-900">테니스갤</span>
-                                    <span class="text-xs text-gray-500">312</span>
-                                </div>
-                            </div>
-                            
-                            <div class="gallery-item p-2 cursor-pointer">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-medium text-gray-900">탁구갤</span>
-                                    <span class="text-xs text-gray-500">267</span>
-                                </div>
-                            </div>
-                            
-                            <div class="gallery-item p-2 cursor-pointer">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-medium text-gray-900">경마갤</span>
-                                    <span class="text-xs text-gray-500">756</span>
-                                </div>
-                            </div>
-                            
-                            <div class="gallery-item p-2 cursor-pointer">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-medium text-gray-900">경륜갤</span>
-                                    <span class="text-xs text-gray-500">445</span>
-                                </div>
-                            </div>
-                            
-                            <div class="gallery-item p-2 cursor-pointer">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-medium text-gray-900">격투기갤</span>
-                                    <span class="text-xs text-gray-500">523</span>
-                                </div>
-                            </div>
-                            
-                            <div class="gallery-item p-2 cursor-pointer">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-medium text-gray-900">e스포츠갤</span>
-                                    <span class="text-xs text-gray-500">1,089</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-2 text-center">
-                            <button class="text-xs text-blue-600 hover:text-blue-800 font-medium">더보기 +</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 실시간 인플레이 -->
-                <div class="section-card">
-                    <div class="p-5 border-b border-gray-100">
-                        <div class="flex items-center justify-between">
-                            <h3 class="font-semibold text-gray-900">실시간 인플레이</h3>
-                            <span class="live-indicator bg-green-500 text-white text-xs px-3 py-1 font-medium">LIVE</span>
-                        </div>
-                    </div>
-                    <div class="p-4 space-y-3">
-                        <div class="border border-green-200 bg-green-50 p-3">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="font-semibold text-sm">맨시티 vs 아스널</span>
-                                <span class="text-xs bg-green-500 text-white px-2 py-1 font-medium">진행중 67'</span>
-                            </div>
-                            <div class="text-xs text-gray-600 mb-2">현재 스코어: 1-1</div>
-                            <div class="grid grid-cols-3 gap-1 text-xs">
-                                <button class="betting-btn bg-white border p-2 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer rounded" data-team="맨시티 승" data-odds="2.10" data-match="맨시티 vs 아스널">
-                                    <div>맨시티 승</div>
-                                    <div class="font-semibold">2.10</div>
-                                </button>
-                                <button class="betting-btn bg-white border p-2 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer rounded" data-team="무승부" data-odds="3.40" data-match="맨시티 vs 아스널">
-                                    <div>무승부</div>
-                                    <div class="font-semibold">3.40</div>
-                                </button>
-                                <button class="betting-btn bg-white border p-2 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer rounded" data-team="아스널 승" data-odds="3.80" data-match="맨시티 vs 아스널">
-                                    <div>아스널 승</div>
-                                    <div class="font-semibold">3.80</div>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="border border-blue-200 bg-blue-50 p-3">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="font-semibold text-sm">레이커스 vs 워리어스</span>
-                                <span class="text-xs bg-blue-500 text-white px-2 py-1 font-medium">3쿼터</span>
-                            </div>
-                            <div class="text-xs text-gray-600 mb-2">현재 스코어: 89-92</div>
-                            <div class="grid grid-cols-2 gap-1 text-xs">
-                                <button class="betting-btn bg-white border p-2 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer rounded" data-team="레이커스" data-odds="2.25" data-match="레이커스 vs 워리어스">
-                                    <div>레이커스</div>
-                                    <div class="font-semibold">2.25</div>
-                                </button>
-                                <button class="betting-btn bg-white border p-2 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer rounded" data-team="워리어스" data-odds="1.65" data-match="레이커스 vs 워리어스">
-                                    <div>워리어스</div>
-                                    <div class="font-semibold">1.65</div>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="border border-purple-200 bg-purple-50 p-3">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="font-semibold text-sm">T1 vs Gen.G</span>
-                                <span class="text-xs bg-purple-500 text-white px-2 py-1 font-medium">2경기</span>
-                            </div>
-                            <div class="text-xs text-gray-600 mb-2">현재: 1-0 (T1 승)</div>
-                            <div class="grid grid-cols-2 gap-1 text-xs">
-                                <button class="betting-btn bg-white border p-2 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer rounded" data-team="T1 승" data-odds="1.45" data-match="T1 vs Gen.G">
-                                    <div>T1 승</div>
-                                    <div class="font-semibold">1.45</div>
-                                </button>
-                                <button class="betting-btn bg-white border p-2 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer rounded" data-team="Gen.G 승" data-odds="2.75" data-match="T1 vs Gen.G">
-                                    <div>Gen.G 승</div>
-                                    <div class="font-semibold">2.75</div>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 오늘의 주요 경기 -->
-                <div class="section-card">
-                    <div class="p-5 border-b border-gray-100">
-                        <h3 class="font-semibold text-gray-900">오늘의 주요 경기</h3>
-                    </div>
-                    <div class="p-4 space-y-3">
-                        <div class="border border-gray-200 p-3">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="font-semibold text-sm">서울 vs 부산</span>
-                                <span class="text-xs text-gray-500">19:30</span>
-                            </div>
-                            <div class="text-xs text-gray-600 mb-2">K리그1 32라운드</div>
-                            <div class="flex justify-between text-xs">
-                                <span>서울: 2.10</span>
-                                <span>무: 3.20</span>
-                                <span>부산: 3.40</span>
-                            </div>
-                        </div>
-                        
-                        <div class="border border-gray-200 p-3">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="font-semibold text-sm">두산 vs 키움</span>
-                                <span class="text-xs text-gray-500">18:30</span>
-                            </div>
-                            <div class="text-xs text-gray-600 mb-2">KBO 정규시즌</div>
-                            <div class="flex justify-between text-xs">
-                                <span>두산: 1.85</span>
-                                <span>키움: 1.95</span>
-                            </div>
-                        </div>
-                        
-                        <div class="border border-gray-200 p-3">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="font-semibold text-sm">5경주 경마</span>
-                                <span class="text-xs text-gray-500">15:40</span>
-                            </div>
-                            <div class="text-xs text-gray-600 mb-2">서울경마공원</div>
-                            <div class="text-xs">
-                                <div>1번마: 3.2배 | 2번마: 5.1배</div>
-                            </div>
-                        </div>
-                        
-                        <div class="border border-gray-200 p-3">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="font-semibold text-sm">안세영 vs 마린</span>
-                                <span class="text-xs text-gray-500">21:00</span>
-                            </div>
-                            <div class="text-xs text-gray-600 mb-2">배드민턴 월드투어</div>
-                            <div class="flex justify-between text-xs">
-                                <span>안세영: 1.25</span>
-                                <span>마린: 3.75</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 실시간 베팅 정보 -->
-                <div class="section-card">
-                    <div class="p-5 border-b border-gray-100">
-                        <h3 class="font-semibold text-gray-900">실시간 베팅 정보</h3>
-                    </div>
-                    <div class="p-5 space-y-4">
-                        <div class="border border-gray-200 p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <span class="font-semibold text-gray-900">맨시티 vs 아스널</span>
-                                <span class="text-xs text-red-500 font-medium">진행중</span>
-                            </div>
-                            <div class="grid grid-cols-3 gap-2 text-sm">
-                                <div class="text-center">
-                                    <div class="text-gray-600">맨시티 승</div>
-                                    <div class="font-semibold">1.85</div>
-                                </div>
-                                <div class="text-center">
-                                    <div class="text-gray-600">무승부</div>
-                                    <div class="font-semibold">3.20</div>
-                                </div>
-                                <div class="text-center">
-                                    <div class="text-gray-600">아스널 승</div>
-                                    <div class="font-semibold">4.10</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="border border-gray-200 p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <span class="font-semibold text-gray-900">KIA vs LG</span>
-                                <span class="text-xs text-gray-500 font-medium">19:00</span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 text-sm">
-                                <div class="text-center">
-                                    <div class="text-gray-600">KIA 승</div>
-                                    <div class="font-semibold">2.10</div>
-                                </div>
-                                <div class="text-center">
-                                    <div class="text-gray-600">LG 승</div>
-                                    <div class="font-semibold">1.75</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="border border-gray-200 p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <span class="font-semibold text-gray-900">레이커스 vs 워리어스</span>
-                                <span class="text-xs text-gray-500 font-medium">11:00</span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 text-sm">
-                                <div class="text-center">
-                                    <div class="text-gray-600">레이커스</div>
-                                    <div class="font-semibold">1.95</div>
-                                </div>
-                                <div class="text-center">
-                                    <div class="text-gray-600">워리어스</div>
-                                    <div class="font-semibold">1.90</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 인기 유저 -->
-                <div class="section-card">
-                    <div class="p-5 border-b border-gray-100">
-                        <h3 class="font-semibold text-gray-900">이주의 베팅 고수</h3>
-                    </div>
-                    <div class="p-5 space-y-4">
-                        <div class="flex items-center space-x-4">
-                            <div class="w-10 h-10 bg-yellow-500 flex items-center justify-center text-white font-bold">1</div>
-                            <div class="flex-1">
-                                <div class="font-semibold text-gray-900">베팅왕</div>
-                                <div class="text-sm text-gray-500">적중률 89.2%</div>
-                            </div>
-                            <div class="text-sm text-green-600 font-bold">+2,340만원</div>
-                        </div>
-                        
-                        <div class="flex items-center space-x-4">
-                            <div class="w-10 h-10 bg-gray-400 flex items-center justify-center text-white font-bold">2</div>
-                            <div class="flex-1">
-                                <div class="font-semibold text-gray-900">예언자</div>
-                                <div class="text-sm text-gray-500">적중률 87.5%</div>
-                            </div>
-                            <div class="text-sm text-green-600 font-bold">+1,890만원</div>
-                        </div>
-                        
-                        <div class="flex items-center space-x-4">
-                            <div class="w-10 h-10 bg-orange-500 flex items-center justify-center text-white font-bold">3</div>
-                            <div class="flex-1">
-                                <div class="font-semibold text-gray-900">스포츠박사</div>
-                                <div class="text-sm text-gray-500">적중률 85.1%</div>
-                            </div>
-                            <div class="text-sm text-green-600 font-bold">+1,567만원</div>
-                        </div>
-                    </div>
+                <!-- 댓글 목록 -->
+                <div id="commentsList" class="divide-y divide-gray-100">
+                    <!-- 댓글들이 여기에 동적으로 추가됩니다 -->
                 </div>
             </div>
         </div>
@@ -675,12 +727,183 @@
         </div>
     </footer>
 
+    <!-- 로그인 모달 -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center modal">
+        <div class="bg-white rounded-lg p-8 w-96 max-w-md mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">로그인</h3>
+                <button onclick="closeLoginModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form onsubmit="handleLogin(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">아이디</label>
+                        <input type="text" id="loginUsername" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="아이디를 입력하세요">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">비밀번호</label>
+                        <input type="password" id="loginPassword" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="비밀번호를 입력하세요">
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="rememberMe" class="mr-2">
+                        <label for="rememberMe" class="text-sm text-gray-600">로그인 상태 유지</label>
+                    </div>
+                </div>
+                
+                <div class="mt-6 space-y-3">
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-medium">
+                        로그인
+                    </button>
+                    <div class="text-center">
+                        <span class="text-sm text-gray-600">계정이 없으신가요? </span>
+                        <button type="button" onclick="showRegisterModal()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">회원가입</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 회원가입 모달 -->
+    <div id="registerModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center modal">
+        <div class="bg-white rounded-lg p-8 w-96 max-w-md mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">회원가입</h3>
+                <button onclick="closeRegisterModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form onsubmit="handleRegister(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">아이디</label>
+                        <input type="text" id="registerUsername" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="아이디를 입력하세요">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">비밀번호</label>
+                        <input type="password" id="registerPassword" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="비밀번호를 입력하세요">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">비밀번호 확인</label>
+                        <input type="password" id="registerPasswordConfirm" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="비밀번호를 다시 입력하세요">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">닉네임</label>
+                        <input type="text" id="registerNickname" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="닉네임을 입력하세요">
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="agreeTerms" required class="mr-2">
+                        <label for="agreeTerms" class="text-sm text-gray-600">이용약관 및 개인정보처리방침에 동의합니다</label>
+                    </div>
+                </div>
+                
+                <div class="mt-6 space-y-3">
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-medium">
+                        회원가입
+                    </button>
+                    <div class="text-center">
+                        <span class="text-sm text-gray-600">이미 계정이 있으신가요? </span>
+                        <button type="button" onclick="showLoginModal()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">로그인</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 글쓰기 모달 -->
+    <div id="writeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center modal">
+        <div class="bg-white rounded-lg p-8 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">새 글 작성</h3>
+                <button onclick="closeWriteModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form onsubmit="handleWritePost(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">갤러리 선택</label>
+                        <select id="postGallery" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">갤러리를 선택하세요</option>
+                            <option value="축구갤">축구갤</option>
+                            <option value="야구갤">야구갤</option>
+                            <option value="농구갤">농구갤</option>
+                            <option value="배구갤">배구갤</option>
+                            <option value="테니스갤">테니스갤</option>
+                            <option value="탁구갤">탁구갤</option>
+                            <option value="경마갤">경마갤</option>
+                            <option value="경륜갤">경륜갤</option>
+                            <option value="격투기갤">격투기갤</option>
+                            <option value="e스포츠갤">e스포츠갤</option>
+                            <option value="유머갤">유머갤</option>
+                            <option value="분석갤">분석갤</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">제목</label>
+                        <input type="text" id="postTitle" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="제목을 입력하세요" maxlength="100">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">내용</label>
+                        <textarea id="postContent" required 
+                                class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none" 
+                                rows="10" placeholder="내용을 입력하세요..." maxlength="2000"></textarea>
+                        <div class="text-right text-sm text-gray-500 mt-1">
+                            <span id="contentLength">0</span>/2000자
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex space-x-3">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-medium">
+                        게시하기
+                    </button>
+                    <button type="button" onclick="closeWriteModal()" class="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                        취소
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- 베팅 모달 -->
-    <div id="bettingModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div id="bettingModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center modal">
         <div class="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-gray-900">베팅하기</h3>
-                <button id="closeBettingModal" class="text-gray-400 hover:text-gray-600">
+                <button onclick="closeBettingModal()" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -699,10 +922,10 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">베팅 금액 선택</label>
                     <div class="grid grid-cols-2 gap-2 mb-3">
-                        <button class="quick-bet bg-gray-100 hover:bg-gray-200 px-4 py-3 text-sm rounded font-medium transition-colors" data-amount="10000">1만P</button>
-                        <button class="quick-bet bg-gray-100 hover:bg-gray-200 px-4 py-3 text-sm rounded font-medium transition-colors" data-amount="50000">5만P</button>
-                        <button class="quick-bet bg-gray-100 hover:bg-gray-200 px-4 py-3 text-sm rounded font-medium transition-colors" data-amount="100000">10만P</button>
-                        <button class="quick-bet bg-gray-100 hover:bg-gray-200 px-4 py-3 text-sm rounded font-medium transition-colors" data-amount="all">전액</button>
+                        <button type="button" class="quick-bet bg-gray-100 hover:bg-gray-200 px-4 py-3 text-sm rounded font-medium transition-colors" data-amount="10000">1만P</button>
+                        <button type="button" class="quick-bet bg-gray-100 hover:bg-gray-200 px-4 py-3 text-sm rounded font-medium transition-colors" data-amount="50000">5만P</button>
+                        <button type="button" class="quick-bet bg-gray-100 hover:bg-gray-200 px-4 py-3 text-sm rounded font-medium transition-colors" data-amount="100000">10만P</button>
+                        <button type="button" class="quick-bet bg-gray-100 hover:bg-gray-200 px-4 py-3 text-sm rounded font-medium transition-colors" data-amount="all">전액</button>
                     </div>
                     
                     <div class="mb-3">
@@ -726,10 +949,10 @@
                 </div>
                 
                 <div class="flex space-x-3">
-                    <button id="confirmBet" class="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-medium">
+                    <button onclick="confirmBet()" class="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-medium">
                         베팅 확정
                     </button>
-                    <button id="cancelBet" class="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                    <button onclick="closeBettingModal()" class="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50">
                         취소
                     </button>
                 </div>
@@ -737,33 +960,562 @@
         </div>
     </div>
 
+    <!-- 사진 모달 -->
+    <div id="photoModal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 flex items-center justify-center modal">
+        <div class="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="photoModalTitle" class="text-lg font-semibold text-gray-900">사진 제목</h3>
+                <button onclick="closePhotoModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="text-center">
+                <div id="photoModalContent" class="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center mb-4">
+                    <span class="text-gray-500">사진을 불러오는 중...</span>
+                </div>
+                <p id="photoModalGallery" class="text-sm text-gray-600"></p>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // 전역 변수들
+        let currentUser = null;
         let userPoints = 125000;
-        
-        // 실시간 업데이트 시뮬레이션
-        function updateLiveContent() {
-            const liveIndicators = document.querySelectorAll('.live-indicator');
-            liveIndicators.forEach(indicator => {
-                indicator.style.opacity = indicator.style.opacity === '0.5' ? '1' : '0.5';
+        let posts = [];
+        let comments = [];
+        let currentPostId = null;
+        let postIdCounter = 1;
+        let commentIdCounter = 1;
+
+        // 초기 게시물 데이터
+        const initialPosts = [
+            {
+                id: 1,
+                title: "손흥민 골 예측 성공했다 ㅋㅋㅋ",
+                content: "오늘 토트넘 경기에서 손흥민이 골 넣을 거라고 예측했는데 진짜 넣었네요! 베팅도 성공했습니다 ㅎㅎ",
+                author: "베팅왕",
+                gallery: "축구갤",
+                date: new Date(Date.now() - 2 * 60 * 1000),
+                views: 1247,
+                likes: 89,
+                commentCount: 127,
+                isHot: true,
+                isNew: false
+            },
+            {
+                id: 2,
+                title: "오늘 KIA vs LG 경기 분석글",
+                content: "오늘 경기 분석해봤습니다. KIA 타선이 최근 좋은 모습을 보이고 있어서...",
+                author: "야구고수",
+                gallery: "야구갤",
+                date: new Date(Date.now() - 5 * 60 * 1000),
+                views: 523,
+                likes: 34,
+                commentCount: 45,
+                isHot: false,
+                isNew: true
+            },
+            {
+                id: 3,
+                title: "NBA 파이널 예측 맞춘 사람 있나?",
+                content: "작년 NBA 파이널 결과를 정확히 예측한 사람이 있을까요? 올해도 예측해보세요!",
+                author: "농구매니아",
+                gallery: "농구갤",
+                date: new Date(Date.now() - 8 * 60 * 1000),
+                views: 892,
+                likes: 67,
+                commentCount: 89,
+                isHot: true,
+                isNew: false
+            },
+            {
+                id: 4,
+                title: "베팅 실패한 사람들 표정.jpg",
+                content: "어제 경기 베팅 실패한 사람들 표정 모음집입니다 ㅋㅋㅋ 다들 힘내세요!",
+                author: "웃음제조기",
+                gallery: "유머갤",
+                date: new Date(Date.now() - 12 * 60 * 1000),
+                views: 2156,
+                likes: 178,
+                commentCount: 234,
+                isHot: false,
+                isNew: false
+            }
+        ];
+
+        // 초기화
+        function initializeApp() {
+            posts = [...initialPosts];
+            postIdCounter = Math.max(...posts.map(p => p.id)) + 1;
+            renderPosts();
+            
+            // 로컬 스토리지에서 사용자 정보 복원
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                updateAuthUI();
+            }
+
+            // 베팅 버튼 이벤트 리스너 추가
+            setupBettingButtons();
+        }
+
+        // 알림 함수들
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notificationText.textContent = message;
+            
+            // 색상 변경
+            notification.className = 'notification';
+            if (type === 'success') {
+                notification.classList.add('bg-green-500');
+            } else if (type === 'error') {
+                notification.classList.add('bg-red-500');
+            } else if (type === 'info') {
+                notification.classList.add('bg-blue-500');
+            }
+            
+            notification.classList.add('show');
+            
+            // 3초 후 자동 숨김
+            setTimeout(() => {
+                hideNotification();
+            }, 3000);
+        }
+
+        function hideNotification() {
+            const notification = document.getElementById('notification');
+            notification.classList.remove('show');
+        }
+
+        // 인증 관련 함수들
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.remove('hidden');
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        function showRegisterModal() {
+            closeLoginModal();
+            document.getElementById('registerModal').classList.remove('hidden');
+        }
+
+        function closeRegisterModal() {
+            document.getElementById('registerModal').classList.add('hidden');
+            document.getElementById('registerUsername').value = '';
+            document.getElementById('registerPassword').value = '';
+            document.getElementById('registerPasswordConfirm').value = '';
+            document.getElementById('registerNickname').value = '';
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            // 간단한 로그인 시뮬레이션
+            if (username && password) {
+                currentUser = {
+                    username: username,
+                    nickname: username,
+                    points: userPoints
+                };
+                
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                updateAuthUI();
+                closeLoginModal();
+                showNotification(`${username}님, 환영합니다!`);
+            }
+        }
+
+        function handleRegister(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+            const nickname = document.getElementById('registerNickname').value;
+            
+            if (password !== passwordConfirm) {
+                showNotification('비밀번호가 일치하지 않습니다.', 'error');
+                return;
+            }
+            
+            // 회원가입 시뮬레이션
+            currentUser = {
+                username: username,
+                nickname: nickname,
+                points: userPoints + 100000 // 신규 가입 보너스
+            };
+            
+            userPoints = currentUser.points;
+            document.getElementById('userPoints').textContent = userPoints.toLocaleString() + 'P';
+            
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            updateAuthUI();
+            closeRegisterModal();
+            showNotification(`${nickname}님, 회원가입을 축하합니다! 신규 가입 보너스 10만P가 지급되었습니다!`);
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            updateAuthUI();
+            showNotification('로그아웃되었습니다.');
+        }
+
+        function updateAuthUI() {
+            const authButtons = document.getElementById('authButtons');
+            const userInfo = document.getElementById('userInfo');
+            const welcomeUser = document.getElementById('welcomeUser');
+            const commentUserInitial = document.getElementById('commentUserInitial');
+            
+            if (currentUser) {
+                authButtons.classList.add('hidden');
+                userInfo.classList.remove('hidden');
+                welcomeUser.textContent = `${currentUser.nickname}님`;
+                commentUserInitial.textContent = currentUser.nickname.charAt(0);
+                
+                // 포인트 업데이트
+                document.getElementById('userPoints').textContent = currentUser.points.toLocaleString() + 'P';
+                userPoints = currentUser.points;
+            } else {
+                authButtons.classList.remove('hidden');
+                userInfo.classList.add('hidden');
+                commentUserInitial.textContent = '?';
+            }
+        }
+
+        // 글쓰기 관련 함수들
+        function showWriteModal() {
+            if (!currentUser) {
+                showNotification('로그인이 필요합니다.', 'error');
+                showLoginModal();
+                return;
+            }
+            document.getElementById('writeModal').classList.remove('hidden');
+        }
+
+        function closeWriteModal() {
+            document.getElementById('writeModal').classList.add('hidden');
+            document.getElementById('postGallery').value = '';
+            document.getElementById('postTitle').value = '';
+            document.getElementById('postContent').value = '';
+            document.getElementById('contentLength').textContent = '0';
+        }
+
+        function handleWritePost(event) {
+            event.preventDefault();
+            
+            const gallery = document.getElementById('postGallery').value;
+            const title = document.getElementById('postTitle').value;
+            const content = document.getElementById('postContent').value;
+            
+            const newPost = {
+                id: postIdCounter++,
+                title: title,
+                content: content,
+                author: currentUser.nickname,
+                gallery: gallery,
+                date: new Date(),
+                views: 0,
+                likes: 0,
+                commentCount: 0,
+                isHot: false,
+                isNew: true
+            };
+            
+            posts.unshift(newPost);
+            renderPosts();
+            closeWriteModal();
+            showNotification('게시물이 성공적으로 등록되었습니다!');
+        }
+
+        // 게시물 렌더링
+        function renderPosts(postsToRender = posts) {
+            const postsList = document.getElementById('postsList');
+            postsList.innerHTML = '';
+            
+            postsToRender.forEach(post => {
+                const postElement = createPostElement(post);
+                postsList.appendChild(postElement);
             });
         }
 
-        // 이벤트 배너 클릭 이벤트
-        document.querySelector('button:contains("지금 가입하기")') || 
-        document.querySelector('.bg-white.text-blue-600').addEventListener('click', function() {
-            alert('🎉 회원가입 페이지로 이동합니다!\n\n✅ 첫 베팅 최대 10만원 보너스\n✅ 무료 분석 리포트 제공\n✅ 7일간 프리미엄 서비스 무료');
-        });
+        function createPostElement(post) {
+            const div = document.createElement('div');
+            div.className = 'p-5 hover:bg-gray-50 cursor-pointer transition-colors';
+            div.onclick = () => showPostDetail(post.title, post.author, post.content, post.id);
+            
+            const timeAgo = getTimeAgo(post.date);
+            const badgeClass = post.isHot ? 'hot-post' : (post.isNew ? 'new-post' : 'bg-gray-500 text-white');
+            const badgeText = post.isHot ? 'HOT' : (post.isNew ? 'NEW' : '일반');
+            
+            div.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <span class="${badgeClass} px-3 py-1 text-xs font-medium">${badgeText}</span>
+                    <span class="text-sm text-blue-600 font-medium">[${post.gallery}]</span>
+                    <span class="font-medium text-gray-900">${post.title}</span>
+                    <span class="text-red-500 text-sm font-medium">[${post.commentCount}]</span>
+                </div>
+                <div class="mt-3 flex items-center space-x-6 text-sm text-gray-500">
+                    <span class="font-medium">${post.author}</span>
+                    <span>${timeAgo}</span>
+                    <span>조회 ${post.views.toLocaleString()}</span>
+                    <span class="text-red-500">추천 ${post.likes}</span>
+                </div>
+            `;
+            
+            return div;
+        }
 
-        // 갤러리 클릭 이벤트
-        document.querySelectorAll('.gallery-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const galleryName = this.querySelector('span').textContent;
-                alert(`${galleryName}로 이동합니다!`);
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            
+            if (minutes < 1) return '방금전';
+            if (minutes < 60) return `${minutes}분전`;
+            if (hours < 24) return `${hours}시간전`;
+            return `${days}일전`;
+        }
+
+        // 검색 기능
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            
+            if (!searchTerm) {
+                clearSearch();
+                return;
+            }
+            
+            const filteredPosts = posts.filter(post => 
+                post.title.toLowerCase().includes(searchTerm) ||
+                post.content.toLowerCase().includes(searchTerm) ||
+                post.author.toLowerCase().includes(searchTerm) ||
+                post.gallery.toLowerCase().includes(searchTerm)
+            );
+            
+            showSearchResults(filteredPosts, searchTerm);
+        }
+
+        function handleSearchEnter(event) {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        }
+
+        function showSearchResults(results, searchTerm) {
+            const searchResults = document.getElementById('searchResults');
+            const searchResultsList = document.getElementById('searchResultsList');
+            const hotPosts = document.getElementById('hotPosts');
+            
+            searchResults.classList.remove('hidden');
+            hotPosts.classList.add('hidden');
+            
+            searchResultsList.innerHTML = '';
+            
+            if (results.length === 0) {
+                searchResultsList.innerHTML = `
+                    <div class="p-6 text-center text-gray-500">
+                        "${searchTerm}"에 대한 검색 결과가 없습니다.
+                    </div>
+                `;
+            } else {
+                results.forEach(post => {
+                    const postElement = createPostElement(post);
+                    searchResultsList.appendChild(postElement);
+                });
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchResults').classList.add('hidden');
+            document.getElementById('hotPosts').classList.remove('hidden');
+        }
+
+        function filterByGallery(galleryName) {
+            const filteredPosts = posts.filter(post => post.gallery === galleryName);
+            showSearchResults(filteredPosts, galleryName);
+            document.getElementById('searchInput').value = galleryName;
+        }
+
+        // 게시물 상세 보기
+        function showPostDetail(title, author, content, postId = null) {
+            document.getElementById('mainPage').classList.add('hidden');
+            document.getElementById('postDetailPage').classList.remove('hidden');
+            
+            document.getElementById('postDetailTitle').textContent = title;
+            document.getElementById('postDetailAuthor').textContent = author;
+            document.getElementById('postDetailDate').textContent = new Date().toLocaleDateString();
+            document.getElementById('postDetailContent').innerHTML = content.replace(/\n/g, '<br>');
+            
+            currentPostId = postId;
+            
+            // 해당 게시물의 댓글 로드
+            loadComments(postId);
+            
+            // 조회수 증가
+            if (postId) {
+                const post = posts.find(p => p.id === postId);
+                if (post) {
+                    post.views++;
+                }
+            }
+        }
+
+        function showMainPage() {
+            document.getElementById('mainPage').classList.remove('hidden');
+            document.getElementById('postDetailPage').classList.add('hidden');
+            clearSearch();
+        }
+
+        function likePost() {
+            const likeCount = document.getElementById('likeCount');
+            const currentLikes = parseInt(likeCount.textContent);
+            likeCount.textContent = currentLikes + 1;
+            
+            // 게시물 데이터에도 반영
+            if (currentPostId) {
+                const post = posts.find(p => p.id === currentPostId);
+                if (post) {
+                    post.likes++;
+                }
+            }
+            
+            showNotification('추천했습니다!');
+        }
+
+        // 댓글 기능
+        function loadComments(postId) {
+            const postComments = comments.filter(c => c.postId === postId);
+            const commentsList = document.getElementById('commentsList');
+            const commentCount = document.getElementById('commentCount');
+            
+            commentCount.textContent = postComments.length;
+            commentsList.innerHTML = '';
+            
+            postComments.forEach(comment => {
+                const commentElement = createCommentElement(comment);
+                commentsList.appendChild(commentElement);
             });
-        });
+        }
 
-        // 베팅 모달 관련 함수들
+        function createCommentElement(comment) {
+            const div = document.createElement('div');
+            div.className = 'comment-item p-4';
+            
+            const timeAgo = getTimeAgo(comment.date);
+            
+            div.innerHTML = `
+                <div class="flex space-x-4">
+                    <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                        <span class="text-gray-600 font-medium">${comment.author.charAt(0)}</span>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <span class="font-medium text-gray-900">${comment.author}</span>
+                            <span class="text-sm text-gray-500">${timeAgo}</span>
+                        </div>
+                        <p class="text-gray-700">${comment.content}</p>
+                        <div class="flex items-center space-x-4 mt-2">
+                            <button onclick="likeComment(${comment.id})" class="text-sm text-gray-500 hover:text-red-500 flex items-center space-x-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                                <span id="commentLikes${comment.id}">${comment.likes}</span>
+                            </button>
+                            <button class="text-sm text-gray-500 hover:text-blue-500">답글</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return div;
+        }
+
+        function addComment() {
+            if (!currentUser) {
+                showNotification('로그인이 필요합니다.', 'error');
+                showLoginModal();
+                return;
+            }
+            
+            const commentInput = document.getElementById('commentInput');
+            const content = commentInput.value.trim();
+            
+            if (!content) {
+                showNotification('댓글 내용을 입력해주세요.', 'error');
+                return;
+            }
+            
+            const newComment = {
+                id: commentIdCounter++,
+                postId: currentPostId,
+                author: currentUser.nickname,
+                content: content,
+                date: new Date(),
+                likes: 0
+            };
+            
+            comments.push(newComment);
+            commentInput.value = '';
+            
+            // 게시물의 댓글 수 증가
+            if (currentPostId) {
+                const post = posts.find(p => p.id === currentPostId);
+                if (post) {
+                    post.commentCount++;
+                }
+            }
+            
+            loadComments(currentPostId);
+            showNotification('댓글이 등록되었습니다!');
+        }
+
+        function likeComment(commentId) {
+            const comment = comments.find(c => c.id === commentId);
+            if (comment) {
+                comment.likes++;
+                document.getElementById(`commentLikes${commentId}`).textContent = comment.likes;
+            }
+        }
+
+        // 베팅 관련 함수들
+        function setupBettingButtons() {
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.betting-btn')) {
+                    const button = e.target.closest('.betting-btn');
+                    const team = button.getAttribute('data-team') || button.querySelector('div').textContent;
+                    const odds = button.getAttribute('data-odds') || button.querySelector('.font-semibold').textContent;
+                    const match = button.getAttribute('data-match') || '경기';
+                    
+                    openBettingModal(team, odds, match);
+                }
+            });
+        }
+
         function openBettingModal(team, odds, matchInfo = '') {
+            if (!currentUser) {
+                showNotification('베팅하려면 로그인이 필요합니다.', 'error');
+                showLoginModal();
+                return;
+            }
+            
             document.getElementById('selectedTeam').textContent = team;
             document.getElementById('selectedOdds').textContent = odds + '배';
             document.getElementById('matchInfo').textContent = matchInfo;
@@ -791,155 +1543,116 @@
             document.getElementById('expectedWin').textContent = expectedWin.toLocaleString() + 'P';
         }
 
-        function updateUserPoints(newPoints) {
-            userPoints = newPoints;
-            document.getElementById('userPoints').textContent = userPoints.toLocaleString() + 'P';
-        }
-
-        // 베팅 모달 함수들을 전역으로 설정
-        window.openBettingModal = openBettingModal;
-        window.closeBettingModal = closeBettingModal;
-
-        // 베팅 버튼 클릭 이벤트 추가 - 수정된 버전
-        document.addEventListener('DOMContentLoaded', function() {
-            // 모든 베팅 버튼에 클릭 이벤트 추가
-            const bettingButtons = document.querySelectorAll('.betting-btn');
-            console.log('베팅 버튼 개수:', bettingButtons.length);
-            
-            bettingButtons.forEach((button, index) => {
-                console.log('버튼 설정:', index, button);
-                button.style.cursor = 'pointer';
-                
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    console.log('베팅 버튼 클릭됨!');
-                    
-                    const team = this.getAttribute('data-team') || this.querySelector('div').textContent;
-                    const odds = this.getAttribute('data-odds') || this.querySelector('.font-semibold').textContent;
-                    const match = this.getAttribute('data-match') || '경기';
-                    
-                    console.log('베팅 정보:', team, odds, match);
-                    openBettingModal(team, odds, match);
-                });
-                
-                // 호버 효과도 추가
-                button.addEventListener('mouseenter', function() {
-                    this.style.backgroundColor = '#dbeafe';
-                    this.style.borderColor = '#3b82f6';
-                });
-                
-                button.addEventListener('mouseleave', function() {
-                    this.style.backgroundColor = 'white';
-                    this.style.borderColor = '#e5e7eb';
-                });
-            });
-        });
-
-        // 모달 닫기 이벤트
-        document.getElementById('closeBettingModal').addEventListener('click', closeBettingModal);
-        document.getElementById('cancelBet').addEventListener('click', closeBettingModal);
-
-        // 베팅 금액 입력 시 예상 당첨금 업데이트
-        document.getElementById('betAmount').addEventListener('input', updateExpectedWin);
-
-        // 빠른 베팅 금액 버튼
-        document.querySelectorAll('.quick-bet').forEach(button => {
-            button.addEventListener('click', function() {
-                const amount = this.getAttribute('data-amount');
-                const betAmountInput = document.getElementById('betAmount');
-                const selectedAmountDisplay = document.getElementById('selectedAmount');
-                
-                let actualAmount;
-                if (amount === 'all') {
-                    actualAmount = userPoints;
-                    selectedAmountDisplay.textContent = userPoints.toLocaleString() + 'P (전액)';
-                } else {
-                    actualAmount = parseInt(amount);
-                    selectedAmountDisplay.textContent = actualAmount.toLocaleString() + 'P';
-                }
-                
-                betAmountInput.value = actualAmount;
-                updateExpectedWin();
-                
-                // 버튼 선택 효과
-                document.querySelectorAll('.quick-bet').forEach(btn => {
-                    btn.classList.remove('bg-blue-500', 'text-white');
-                    btn.classList.add('bg-gray-100');
-                });
-                this.classList.remove('bg-gray-100');
-                this.classList.add('bg-blue-500', 'text-white');
-            });
-        });
-
-        // 직접 입력 시 실시간 업데이트
-        document.getElementById('betAmount').addEventListener('input', function() {
-            const amount = parseInt(this.value) || 0;
-            const selectedAmountDisplay = document.getElementById('selectedAmount');
-            
-            if (amount > 0) {
-                selectedAmountDisplay.textContent = amount.toLocaleString() + 'P';
-            } else {
-                selectedAmountDisplay.textContent = '0P';
-            }
-            
-            // 직접 입력 시 버튼 선택 해제
-            document.querySelectorAll('.quick-bet').forEach(btn => {
-                btn.classList.remove('bg-blue-500', 'text-white');
-                btn.classList.add('bg-gray-100');
-            });
-            
-            updateExpectedWin();
-        });
-
-        // 베팅 확정
-        document.getElementById('confirmBet').addEventListener('click', function() {
+        function confirmBet() {
             const betAmount = parseInt(document.getElementById('betAmount').value);
             const team = document.getElementById('selectedTeam').textContent;
             const odds = document.getElementById('selectedOdds').textContent;
             
             if (!betAmount || betAmount <= 0) {
-                alert('베팅 금액을 선택해주세요!');
+                showNotification('베팅 금액을 선택해주세요!', 'error');
                 return;
             }
             
             if (betAmount > userPoints) {
-                alert('보유 포인트가 부족합니다!');
+                showNotification('보유 포인트가 부족합니다!', 'error');
                 return;
             }
             
             // 베팅 처리
-            updateUserPoints(userPoints - betAmount);
+            userPoints -= betAmount;
+            currentUser.points = userPoints;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            document.getElementById('userPoints').textContent = userPoints.toLocaleString() + 'P';
             
-            alert(`🎯 베팅 완료!\n\n선택: ${team} (${odds})\n베팅 금액: ${betAmount.toLocaleString()}P\n\n베팅이 성공적으로 등록되었습니다!`);
+            showNotification(`🎯 베팅 완료!\n선택: ${team} (${odds})\n베팅 금액: ${betAmount.toLocaleString()}P`);
             closeBettingModal();
-        });
+        }
 
-        // 모달 외부 클릭 시 닫기
-        document.getElementById('bettingModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeBettingModal();
+        // 사진 모달
+        function showPhotoModal(title, gallery) {
+            document.getElementById('photoModalTitle').textContent = title;
+            document.getElementById('photoModalGallery').textContent = `출처: ${gallery}`;
+            document.getElementById('photoModal').classList.remove('hidden');
+        }
+
+        function closePhotoModal() {
+            document.getElementById('photoModal').classList.add('hidden');
+        }
+
+        // 이벤트 리스너들
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            
+            // 글자 수 카운터
+            const postContent = document.getElementById('postContent');
+            if (postContent) {
+                postContent.addEventListener('input', function() {
+                    document.getElementById('contentLength').textContent = this.value.length;
+                });
             }
-        });
-
-        // 사진 클릭 이벤트
-        document.querySelectorAll('.photo-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const title = this.querySelector('.text-xs').textContent;
-                alert(`"${title}" 사진을 확대합니다!`);
+            
+            // 베팅 금액 입력 시 예상 당첨금 업데이트
+            const betAmount = document.getElementById('betAmount');
+            if (betAmount) {
+                betAmount.addEventListener('input', function() {
+                    const amount = parseInt(this.value) || 0;
+                    document.getElementById('selectedAmount').textContent = amount.toLocaleString() + 'P';
+                    updateExpectedWin();
+                    
+                    // 직접 입력 시 버튼 선택 해제
+                    document.querySelectorAll('.quick-bet').forEach(btn => {
+                        btn.classList.remove('bg-blue-500', 'text-white');
+                        btn.classList.add('bg-gray-100');
+                    });
+                });
+            }
+            
+            // 빠른 베팅 금액 버튼
+            document.querySelectorAll('.quick-bet').forEach(button => {
+                button.addEventListener('click', function() {
+                    const amount = this.getAttribute('data-amount');
+                    const betAmountInput = document.getElementById('betAmount');
+                    const selectedAmountDisplay = document.getElementById('selectedAmount');
+                    
+                    let actualAmount;
+                    if (amount === 'all') {
+                        actualAmount = userPoints;
+                        selectedAmountDisplay.textContent = userPoints.toLocaleString() + 'P (전액)';
+                    } else {
+                        actualAmount = parseInt(amount);
+                        selectedAmountDisplay.textContent = actualAmount.toLocaleString() + 'P';
+                    }
+                    
+                    betAmountInput.value = actualAmount;
+                    updateExpectedWin();
+                    
+                    // 버튼 선택 효과
+                    document.querySelectorAll('.quick-bet').forEach(btn => {
+                        btn.classList.remove('bg-blue-500', 'text-white');
+                        btn.classList.add('bg-gray-100');
+                    });
+                    this.classList.remove('bg-gray-100');
+                    this.classList.add('bg-blue-500', 'text-white');
+                });
+            });
+            
+            // 모달 외부 클릭 시 닫기
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.add('hidden');
+                    }
+                });
             });
         });
 
-        // 게시물 클릭 이벤트
-        document.querySelectorAll('[class*="hover:bg-gray-50"]').forEach(post => {
-            post.addEventListener('click', function() {
-                const title = this.querySelector('.font-medium, .font-semibold');
-                if (title) {
-                    alert(`"${title.textContent}" 게시물을 엽니다!`);
-                }
+        // 실시간 업데이트 시뮬레이션
+        function updateLiveContent() {
+            const liveIndicators = document.querySelectorAll('.live-indicator');
+            liveIndicators.forEach(indicator => {
+                indicator.style.opacity = indicator.style.opacity === '0.5' ? '1' : '0.5';
             });
-        });
+        }
 
         // 실시간 업데이트
         setInterval(updateLiveContent, 2000);
@@ -947,8 +1660,8 @@
         // 페이지 로드 시 환영 메시지
         window.addEventListener('load', function() {
             console.log('🔥 스포츠갤러리에 오신 것을 환영합니다!');
-            console.log('⚽ 합법적이고 안전한 스포츠 베팅 커뮤니티');
+            console.log('⚽ 완전히 작동하는 스포츠 베팅 커뮤니티');
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'971a13fd62a8aa7a',t:'MTc1NTYxMDk4Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'971a35b940cad1f5',t:'MTc1NTYxMjM2OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
